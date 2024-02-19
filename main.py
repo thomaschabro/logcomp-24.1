@@ -30,7 +30,6 @@ def calculadora(equacao):
         raise TypeError('A equação deve começar com um número')
 
     for i in range(1, len(equacao)):
-        print('elemento: ', equacao[i])
         if is_operator(equacao[i]):
             if i % 2 != 0:
                 operador = equacao[i]
@@ -44,10 +43,6 @@ def calculadora(equacao):
                 raise ValueError('A equação está errada')
         else:
             raise ValueError('A equação está errada')
-
-        print('Variável valor :', valor)
-
-    print('\nValor total: ', valor)
 
 if __name__ == '__main__':
     calculadora(sys.argv[1])
