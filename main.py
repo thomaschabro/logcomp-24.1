@@ -49,20 +49,21 @@ class Parser:
                         resultado += int(tokenAtual.value)
                         tokenAtual = self.tokenizer.selectNext()
                     else:
-                        raise Exception("Erro de sintaxe. Número esperado.")
+                        sys.stderr.write("Erro de sintaxe. Número esperado.")
                 elif tokenAtual.type == "MINUS":
                     tokenAtual = self.tokenizer.selectNext()
                     if tokenAtual.type == "NUMBER":
                         resultado -= int(tokenAtual.value)
                         tokenAtual = self.tokenizer.selectNext()
                     else:
-                        raise Exception("Erro de sintaxe. Número esperado.")
+                        sys.stderr.write("Erro de sintaxe. Número esperado.")
             if tokenAtual.type == "EOF":
+                sys.stdout.write(str(resultado))
                 return resultado
             else:
-                raise Exception("Erro de sintaxe. Fim do arquivo esperado.")
+                sys.stderr.write("Erro de sintaxe. Fim de expressão esperado.")
         else:
-            raise Exception("Erro de sintaxe. Número esperado.")
+            sys.stderr.write("Erro de sintaxe. Número esperado.")
 
     def run(code):
         tokenizer = Tokenizer(code, 0, None)
@@ -75,7 +76,7 @@ def main():
         print("  |-> EXEMPLO: python main.py '1+2-3'")
         return
     else:
-        print(Parser.run(sys.argv[1]))
+        Parser.run(sys.argv[1])
 
 if __name__ == "__main__":
     main()
