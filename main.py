@@ -1,55 +1,81 @@
 import sys
-import re
 
-def is_number(x):
-    try:
-        int(x)
-        return True
-    except:
-        return False
-
-def is_operator(x):
-    return x in ['+', '-', '*', '/']
-
-tabela = {
-    '+': lambda x, y: x + y,
-    '-': lambda x, y: x - y,
-    '*': lambda x, y: x * y,
-    '/': lambda x, y: x / y }
-
-def calculadora(equacao):
-    # split the string by operators
-    equacao = re.split(r'(\+|\-|\*|\/)', equacao)
-
-    if len(equacao) < 3 or len(equacao) % 2 == 0:
-        raise ValueError('A equação está errada')
-        sys.stderr.write("A equação está errada")
-
-    if is_number(equacao[0]):
-        valor = int(equacao[0])
-    else:
-        raise TypeError('A equação deve começar com um número')
-        sys.stderr.write("A equação está errada")
-
-    for i in range(1, len(equacao)):
-        if is_operator(equacao[i]):
-            if i % 2 != 0:
-                operador = equacao[i]
-            else:
-                raise ValueError('A equação está errada')
-                sys.stderr.write("A equação está errada")
-        
-        elif is_number(equacao[i]):
-            if i % 2 == 0:
-                valor = tabela[operador](valor, int(equacao[i]))
-            else:
-                raise ValueError('A equação está errada')
-                sys.stderr.write("A equação está errada")
-        else:
-            raise ValueError('A equação está errada')
-            sys.stderr.write("A equação está errada")
+class Token():
+    def __init__(self, type, value):
+        self.type = type
+        self.value = value
     
-    sys.stdout.write(str(valor))
+class Tokenizer:
+    def __init__(self, source, position, next):
+        self.source = source
+        self.position = position
+        self.next = next
+    
+    def selectNext(self):
+        if self.position < len(self.source):
+            if self.source[self.position] == "+":
+                self.position += 1
+                return Token("PLUS", "+")
+            elif self.source[self.position] == "-":
+                self.position += 1
+                return Token("MINUS", "-")
+            elif self.source[self.position].isdigit():
+                number = ""
+                while self.position < len(self.source) and self.source[self.position].isdigit():
+                    number += self.source[self.position]
+                    self.position += 1
+                return Token("NUMBER", number)
+            elif self.source[self.position] == " ":
+                self.position += 1
+                return self.selectNext()
 
-if __name__ == '__main__':
-    calculadora(sys.argv[1])
+        else:
+            return Token("EOF", None)
+
+class Parser:
+    def __init__(self, tokenizer):
+        self.tokenizer = tokenizer
+    
+    def parseExpression(self):
+        resultado = 0
+        tokenAtual = self.tokenizer.selectNext() 
+        if tokenAtual.type == "NUMBER":
+            resultado = int(tokenAtual.value)
+            tokenAtual = self.tokenizer.selectNext()
+            while (tokenAtual.type == "PLUS" or tokenAtual.type == "MINUS"):
+                if tokenAtual.type == "PLUS":
+                    tokenAtual = self.tokenizer.selectNext()
+                    if tokenAtual.type == "NUMBER":
+                        resultado += int(tokenAtual.value)
+                        tokenAtual = self.tokenizer.selectNext()
+                    else:
+                        raise Exception("Erro de sintaxe. Número esperado.")
+                elif tokenAtual.type == "MINUS":
+                    tokenAtual = self.tokenizer.selectNext()
+                    if tokenAtual.type == "NUMBER":
+                        resultado -= int(tokenAtual.value)
+                        tokenAtual = self.tokenizer.selectNext()
+                    else:
+                        raise Exception("Erro de sintaxe. Número esperado.")
+            if tokenAtual.type == "EOF":
+                return resultado
+            else:
+                raise Exception("Erro de sintaxe. Fim do arquivo esperado.")
+        else:
+            raise Exception("Erro de sintaxe. Número esperado.")
+
+    def run(code):
+        tokenizer = Tokenizer(code, 0, None)
+        parser = Parser(tokenizer)
+        return parser.parseExpression()         
+
+def main():
+    if len(sys.argv) != 2:
+        print("Uso: python main.py <expressão>")
+        print("  |-> EXEMPLO: python main.py '1+2-3'")
+        return
+    else:
+        print(Parser.run(sys.argv[1]))
+
+if __name__ == "__main__":
+    main()
