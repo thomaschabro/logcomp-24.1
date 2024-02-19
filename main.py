@@ -49,7 +49,7 @@ def calculadora(equacao):
             raise ValueError('A equação está errada')
             sys.stderr.write("A equação está errada")
     
-    sys.stdout.write(valor)
+    sys.stdout.write(str(valor))
 
 if __name__ == '__main__':
     calculadora(sys.argv[1])
