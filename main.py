@@ -19,6 +19,12 @@ class Tokenizer:
             elif self.source[self.position] == "-":
                 self.position += 1
                 return Token("MINUS", "-")
+            elif self.source[self.position] == "*":
+                self.position +=1
+                return Token("TIMES", "*")
+            elif self.source[self.position] == "/":
+                self.position +=1
+                return Token("DIV", "/")
             elif self.source[self.position].isdigit():
                 number = ""
                 while self.position < len(self.source) and self.source[self.position].isdigit():
@@ -37,33 +43,52 @@ class Parser:
         self.tokenizer = tokenizer
     
     def parseExpression(self):
-        resultado = 0
-        tokenAtual = self.tokenizer.selectNext() 
-        if tokenAtual.type == "NUMBER":
-            resultado = int(tokenAtual.value)
-            tokenAtual = self.tokenizer.selectNext()
-            while (tokenAtual.type == "PLUS" or tokenAtual.type == "MINUS"):
-                if tokenAtual.type == "PLUS":
-                    tokenAtual = self.tokenizer.selectNext()
-                    if tokenAtual.type == "NUMBER":
-                        resultado += int(tokenAtual.value)
-                        tokenAtual = self.tokenizer.selectNext()
-                    else:
-                        sys.stderr.write("Erro de sintaxe. Número esperado.")
-                elif tokenAtual.type == "MINUS":
-                    tokenAtual = self.tokenizer.selectNext()
-                    if tokenAtual.type == "NUMBER":
-                        resultado -= int(tokenAtual.value)
-                        tokenAtual = self.tokenizer.selectNext()
-                    else:
-                        sys.stderr.write("Erro de sintaxe. Número esperado.")
-            if tokenAtual.type == "EOF":
-                sys.stdout.write(str(resultado))
+        tokenAtual = self.tokenizer.selectNext()
+        resultado, tokenAtual = Parser.parseTerm(self, tokenAtual)
+
+        while (1):
+            if tokenAtual.type == "PLUS":
+                tokenAtual = self.tokenizer.selectNext()
+                if tokenAtual.type == "NUMBER":
+                    numero, tokenAtual = Parser.parseTerm(self, tokenAtual)
+                    resultado += int(numero)
+                else:
+                    sys.stderr.write("Erro de sintaxe. Número esperado. (1)")
+            elif tokenAtual.type == "MINUS":
+                tokenAtual = self.tokenizer.selectNext()
+                if tokenAtual.type == "NUMBER":
+                    numero, tokenAtual = Parser.parseTerm(self, tokenAtual)
+                    resultado -= int(numero)
+                else:
+                    sys.stderr.write("Erro de sintaxe. Número esperado. (2)")
+            elif tokenAtual.type == "EOF":
+                sys.stdout.write(str(int(resultado)))
                 return resultado
             else:
-                sys.stderr.write("Erro de sintaxe. Fim de expressão esperado.")
+                sys.stderr.write("Erro de sintaxe. Operador esperado. (3)") 
+
+    def parseTerm(self, tokenAtual):
+        resultado = 0
+        if tokenAtual.type == "NUMBER":
+            resultado = int(tokenAtual.value)
+            while (1):
+                tokenAtual = self.tokenizer.selectNext()
+                if tokenAtual.type == "TIMES":
+                    tokenAtual = self.tokenizer.selectNext()
+                    if tokenAtual.type == "NUMBER":
+                        resultado *= int(tokenAtual.value)
+                    else:
+                        sys.stderr.write("Erro de sintaxe. Número esperado. (4)")
+                elif tokenAtual.type == "DIV":
+                    tokenAtual = self.tokenizer.selectNext()
+                    if tokenAtual.type == "NUMBER":
+                        resultado /= int(tokenAtual.value)
+                    else:
+                        sys.stderr.write("Erro de sintaxe. Número esperado. (5)")
+                else:
+                    return resultado, tokenAtual
         else:
-            sys.stderr.write("Erro de sintaxe. Número esperado.")
+            sys.stderr.write("Erro de sintaxe. Número esperado. (6)")
 
     def run(code):
         tokenizer = Tokenizer(code, 0, None)
