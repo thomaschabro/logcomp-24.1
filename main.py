@@ -85,10 +85,12 @@ class Parser:
                         resultado /= int(tokenAtual.value)
                     else:
                         sys.stderr.write("Erro de sintaxe. Número esperado. (5)")
+                elif tokenAtual.type == "NUMBER":
+                    sys.stderr.write("Erro de sintaxe. Operador esperado. (6)")
                 else:
                     return resultado, tokenAtual
         else:
-            sys.stderr.write("Erro de sintaxe. Número esperado. (6)")
+            sys.stderr.write("Erro de sintaxe. Número esperado. (7)")
 
     def run(code):
         tokenizer = Tokenizer(code, 0, None)
