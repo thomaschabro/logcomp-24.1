@@ -1,11 +1,22 @@
 import sys
 
+class PrePro():
+    def filter(self, code):
+        i = 0
+        while i < len(code):
+            if code[i] == "-":
+                if code[i+1] == "-":
+                    code = code[:i]
+                    break
+            i += 1
+        return code
+
 class Token():
     def __init__(self, type, value):
         self.type = type
         self.value = value
     
-class Tokenizer:
+class Tokenizer():
     def __init__(self, source, position, next):
         self.source = source
         self.position = position
