@@ -122,6 +122,23 @@ def main():
         print("Uso: python main.py <expressão>")
         print("  |-> EXEMPLO: python main.py '1+2-3'")
         return
+    
+    expression = sys.argv[1]
+    left, right = 0;
+    for char in expression:
+        if char not in "1234567890+-*/() ":
+            print("Erro: Caractere inválido na expressão.")
+            return
+        if char == '(':
+            left += 1
+        elif char == ')':
+            right += 1
+    
+    if left != right:
+        print("Erro: Número de parênteses inválido.")
+        sys.stderr.write("Erro de sintaxe. Número de parênteses inválido.")
+        return
+
     else:
         Parser.run(sys.argv[1])
 
