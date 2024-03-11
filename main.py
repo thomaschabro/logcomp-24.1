@@ -80,7 +80,7 @@ class Parser:
             elif tok.next.type == "DIV":
                 tok.selectNext()
                 numero = Parser.parseFactor(tok)
-                resultado = resultado/ (int(numero))
+                resultado //= (int(numero))
             else:
                 return resultado
 
@@ -88,21 +88,24 @@ class Parser:
         if tok.next.type == "NUMBER":
             numero = tok.next.value
             tok.selectNext()
+            if tok.next.type == "NUMBER":
+                sys.stderr.write("Erro de sintaxe. Número não esperado. (8)")
             return int(numero)
         elif tok.next.type == "PLUS":
             tok.selectNext()
             numero = Parser.parseFactor(tok)
-            resultado += int(numero)
+            return int(numero)
         elif tok.next.type == "MINUS":
             tok.selectNext()
             numero = Parser.parseFactor(tok)
-            resultado -= int(numero)
+            return -int(numero)    
         elif tok.next.type == "LPAREN":
             tok.selectNext()
             resultado = Parser.parseExpression(tok)
             if tok.next.type != "RPAREN":
                 sys.stderr.write("Erro de sintaxe. ')' esperado. (9)")
             else:
+                tok.selectNext()
                 return resultado
         else:
             sys.stderr.write("Erro de sintaxe. Número ou '(' esperado. (10)")
