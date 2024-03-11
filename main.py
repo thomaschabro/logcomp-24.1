@@ -91,18 +91,12 @@ class Parser:
             return int(numero)
         elif tok.next.type == "PLUS":
             tok.selectNext()
-            if tok.next.type == "NUMBER":
-                numero = Parser.parseFactor(tok)
-                resultado += int(numero)
-            else:
-                sys.stderr.write("Erro de sintaxe. Número esperado. (7)")
+            numero = Parser.parseFactor(tok)
+            resultado += int(numero)
         elif tok.next.type == "MINUS":
             tok.selectNext()
-            if tok.next.type == "NUMBER":
-                numero = Parser.parseFactor(tok)
-                resultado -= int(numero)
-            else:
-                sys.stderr.write("Erro de sintaxe. Número esperado. (8)")
+            numero = Parser.parseFactor(tok)
+            resultado -= int(numero)
         elif tok.next.type == "LPAREN":
             tok.selectNext()
             resultado = Parser.parseExpression(tok)
