@@ -25,38 +25,34 @@ class Tokenizer():
     
     def selectNext(self):
         if self.position < len(self.source):
+
             if self.source[self.position] == " ":
-                while self.position < len(self.source) and self.source[self.position] == " ":
+                self.position += 1
+                self.selectNext()
+            if self.source[self.position] == "+":
+                self.position += 1
+                self.next = Token("PLUS", "+")
+            elif self.source[self.position] == "-":
+                self.position += 1
+                self.next = Token("MINUS", "-")
+            elif self.source[self.position] == "*":
+                self.position +=1
+                self.next = Token("TIMES", "*")
+            elif self.source[self.position] == "/":
+                self.position +=1
+                self.next = Token("DIV", "/")
+            elif self.source[self.position] == "(":
+                self.position += 1
+                self.next = Token("LPAREN", "(")
+            elif self.source[self.position] == ")":
+                self.position += 1
+                self.next = Token("RPAREN", ")")
+            elif self.source[self.position].isdigit():
+                number = ""
+                while self.position < len(self.source) and self.source[self.position].isdigit():
+                    number += self.source[self.position]
                     self.position += 1
-            
-            if self.position < len(self.source):
-                if self.source[self.position] == "+":
-                    self.position += 1
-                    self.next = Token("PLUS", "+")
-                elif self.source[self.position] == "-":
-                    self.position += 1
-                    self.next = Token("MINUS", "-")
-                elif self.source[self.position] == "*":
-                    self.position +=1
-                    self.next = Token("TIMES", "*")
-                elif self.source[self.position] == "/":
-                    self.position +=1
-                    self.next = Token("DIV", "/")
-                elif self.source[self.position] == "(":
-                    self.position += 1
-                    self.next = Token("LPAREN", "(")
-                elif self.source[self.position] == ")":
-                    self.position += 1
-                    self.next = Token("RPAREN", ")")
-                elif self.source[self.position].isdigit():
-                    number = ""
-                    while self.position < len(self.source) and self.source[self.position].isdigit():
-                        number += self.source[self.position]
-                        self.position += 1
-                    self.next = Token("NUMBER", number)
-                elif self.source[self.position] == " ":
-                    self.position += 1
-                    self.selectNext()
+                self.next = Token("NUMBER", number)
         else:
             self.next = Token("EOF", "")
 
@@ -64,10 +60,6 @@ class Node():
     def __init__ (self, value:int, children=None):
         self.value = value
         self.children = children if children is not None else []
-
-    @abstractmethod
-    def Evaluate(self):
-        pass
 
 class BinOp(Node):
     def __init__(self, value, children):
