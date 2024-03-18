@@ -54,9 +54,11 @@ class Tokenizer():
                         number += self.source[self.position]
                         self.position += 1
                     self.next = Token("NUMBER", number)
-
+                elif self.source[self.position] == " ":
+                    self.position += 1
+                    self.selectNext()
         else:
-            self.next = Token("EOF", None)
+            self.next = Token("EOF", "")
 
 class Node():
     def __init__ (self, value:int, children=None):
@@ -178,6 +180,7 @@ class Parser:
         tokenizer = Tokenizer(code_filtrado, 0, None)
         resultado = Parser.parseExpression(tokenizer)
         resultado = resultado.Evaluate()
+        tokenizer.selectNext()
         if tokenizer.next.type != "EOF":
             sys.stderr.write("Erro de sintaxe. Fim de arquivo esperado. (11)")
         else:
