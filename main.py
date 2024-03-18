@@ -182,7 +182,8 @@ class Parser:
         resultado = resultado.Evaluate()
         tokenizer.selectNext()
         if tokenizer.next.type != "EOF":
-            sys.stderr.write("Erro de sintaxe. Fim de arquivo esperado. (11)")
+            # sys.stderr.write("Erro de sintaxe. Fim de arquivo esperado. (11)")
+            raise Exception("Erro de sintaxe. Fim de arquivo esperado. (11)")
         else:
             print(resultado)
 
