@@ -1,4 +1,5 @@
 import sys
+from abc import abstractmethod
 
 class PrePro():
     def filter(self, code):
@@ -23,60 +24,108 @@ class Tokenizer():
         self.next = next
     
     def selectNext(self):
-        if self.position >= len(self.source):
-            if self.next.type != "EOF":
-                sys.stderr.write("Erro de sintaxe. Fim de expressão inesperado.")
-            return
-
-        if self.source[self.position] == " ":
-            while self.position < len(self.source) and self.source[self.position] == " ":
-                self.position += 1
-        
         if self.position < len(self.source):
-            if self.source[self.position] == "+":
-                self.position += 1
-                self.next = Token("PLUS", "+")
-            elif self.source[self.position] == "-":
-                self.position += 1
-                self.next = Token("MINUS", "-")
-            elif self.source[self.position] == "*":
-                self.position +=1
-                self.next = Token("TIMES", "*")
-            elif self.source[self.position] == "/":
-                self.position +=1
-                self.next = Token("DIV", "/")
-            elif self.source[self.position] == "(":
-                self.position += 1
-                self.next = Token("LPAREN", "(")
-            elif self.source[self.position] == ")":
-                self.position += 1
-                self.next = Token("RPAREN", ")")
-            elif self.source[self.position].isdigit():
-                number = ""
-                while self.position < len(self.source) and self.source[self.position].isdigit():
-                    number += self.source[self.position]
+            if self.source[self.position] == " ":
+                while self.position < len(self.source) and self.source[self.position] == " ":
                     self.position += 1
-                self.next = Token("NUMBER", number)
+            
+            if self.position < len(self.source):
+                if self.source[self.position] == "+":
+                    self.position += 1
+                    self.next = Token("PLUS", "+")
+                elif self.source[self.position] == "-":
+                    self.position += 1
+                    self.next = Token("MINUS", "-")
+                elif self.source[self.position] == "*":
+                    self.position +=1
+                    self.next = Token("TIMES", "*")
+                elif self.source[self.position] == "/":
+                    self.position +=1
+                    self.next = Token("DIV", "/")
+                elif self.source[self.position] == "(":
+                    self.position += 1
+                    self.next = Token("LPAREN", "(")
+                elif self.source[self.position] == ")":
+                    self.position += 1
+                    self.next = Token("RPAREN", ")")
+                elif self.source[self.position].isdigit():
+                    number = ""
+                    while self.position < len(self.source) and self.source[self.position].isdigit():
+                        number += self.source[self.position]
+                        self.position += 1
+                    self.next = Token("NUMBER", number)
 
         else:
             self.next = Token("EOF", None)
+
+class Node():
+    def __init__ (self, value:int, children=None):
+        self.value = value
+        self.children = children if children is not None else []
+
+    @abstractmethod
+    def Evaluate(self):
+        pass
+
+class BinOp(Node):
+    def __init__(self, value, children):
+        super().__init__(value, children)
+
+    def Evaluate(self):
+        if self.value == "+":
+            return int(self.children[0].Evaluate()) + int(self.children[1].Evaluate())
+        elif self.value == "-":
+            return int(self.children[0].Evaluate()) - int(self.children[1].Evaluate())
+        elif self.value == "*":
+            return int(self.children[0].Evaluate()) * int(self.children[1].Evaluate())
+        elif self.value == "/":
+            return int(self.children[0].Evaluate()) // int(self.children[1].Evaluate())
+
+class UnOp(Node):
+    def __init__(self, value, children):
+        super().__init__(value, children)
+
+    def Evaluate(self):
+        if self.value == "+":
+            return int(self.children[0].Evaluate())
+        elif self.value == "-":
+            return int(-self.children[0].Evaluate())
+        
+class IntVal(Node):
+    def __init__(self, value):
+        super().__init__(value, [])
+
+    def Evaluate(self):
+        return int(self.value)
+    
+class NoOp(Node):
+    def __init__(self):
+        super().__init__(None, [])
+
+    def Evaluate(self):
+        pass
 
 class Parser:
     def __init__(self, tokenizer):
         self.tokenizer = tokenizer
 
     def parseExpression(tok):
+        tok.selectNext()
         resultado = Parser.parseTerm(tok)
 
         while (1):
             if tok.next.type == "PLUS":
                 tok.selectNext()
-                numero = Parser.parseTerm(tok)
-                resultado += int(numero)
+                if tok.next.type != "NUMBER" and tok.next.type != "LPAREN" and tok.next.type != "PLUS" and tok.next.type != "MINUS":
+                    sys.stderr.write("Erro de sintaxe. Número ou '(' esperado. (6)")
+                else:
+                    resultado = BinOp("+", [resultado, Parser.parseTerm(tok)])
             elif tok.next.type == "MINUS":
                 tok.selectNext()
-                numero = Parser.parseTerm(tok)
-                resultado -= int(numero)
+                if tok.next.type != "NUMBER" and tok.next.type != "LPAREN" and tok.next.type != "PLUS" and tok.next.type != "MINUS":
+                    sys.stderr.write("Erro de sintaxe. Número ou '(' esperado. (6)")
+                else:
+                    resultado = BinOp("-", [resultado, Parser.parseTerm(tok)])
             else:
                 return resultado
 
@@ -86,12 +135,17 @@ class Parser:
         while (1):
             if tok.next.type == "TIMES":
                 tok.selectNext()
-                numero = Parser.parseFactor(tok)
-                resultado *= int(numero)
+                if tok.next.type != "NUMBER" and tok.next.type != "LPAREN" and tok.next.type != "PLUS" and tok.next.type != "MINUS":
+                    sys.stderr.write("Erro de sintaxe. Número ou '(' esperado. (7)")
+                else:
+                    resultado = BinOp("*", [resultado, Parser.parseFactor(tok)])
+
             elif tok.next.type == "DIV":
                 tok.selectNext()
-                numero = Parser.parseFactor(tok)
-                resultado //= (int(numero))
+                if tok.next.type != "NUMBER" and tok.next.type != "LPAREN" and tok.next.type != "PLUS" and tok.next.type != "MINUS":
+                    sys.stderr.write("Erro de sintaxe. Número ou '(' esperado. (7)")
+                else:
+                    resultado = BinOp("/", [resultado, Parser.parseFactor(tok)])
             else:
                 return resultado
 
@@ -99,19 +153,16 @@ class Parser:
         if tok.next.type == "NUMBER":
             numero = tok.next.value
             tok.selectNext()
-            if tok.next.type == "NUMBER":
-                sys.stderr.write("Erro de sintaxe. Número não esperado. (8)")
-            return int(numero)
+            return IntVal(numero)
         elif tok.next.type == "PLUS":
             tok.selectNext()
-            numero = Parser.parseFactor(tok)
-            return int(numero)
+            numero = UnOp("+", [Parser.parseFactor(tok)])
+            return numero
         elif tok.next.type == "MINUS":
             tok.selectNext()
-            numero = Parser.parseFactor(tok)
-            return -int(numero)    
+            numero = UnOp("-", [Parser.parseFactor(tok)])
+            return numero
         elif tok.next.type == "LPAREN":
-            tok.selectNext()
             resultado = Parser.parseExpression(tok)
             if tok.next.type != "RPAREN":
                 sys.stderr.write("Erro de sintaxe. ')' esperado. (9)")
@@ -123,10 +174,11 @@ class Parser:
         
 
     def run(code):
-        tokenizer = Tokenizer(code, 0, None)
-        tokenizer.selectNext()
+        code_filtrado = PrePro().filter(code)
+        tokenizer = Tokenizer(code_filtrado, 0, None)
         resultado = Parser.parseExpression(tokenizer)
-        print(resultado)         
+        resultado = resultado.Evaluate()
+        print(resultado)
 
 def main():
     if len(sys.argv) != 2:
