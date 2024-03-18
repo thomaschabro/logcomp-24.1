@@ -178,7 +178,10 @@ class Parser:
         tokenizer = Tokenizer(code_filtrado, 0, None)
         resultado = Parser.parseExpression(tokenizer)
         resultado = resultado.Evaluate()
-        print(resultado)
+        if tokenizer.next.type != "EOF":
+            sys.stderr.write("Erro de sintaxe. Fim de arquivo esperado. (11)")
+        else:
+            print(resultado)
 
 def main():
     if len(sys.argv) != 2:
