@@ -182,13 +182,20 @@ class Parser:
 
 def main():
     if len(sys.argv) != 2:
-        print("Uso: python main.py <expressão>")
-        print("  |-> EXEMPLO: python main.py '1+2-3'")
+        print("Uso: python main.py <file>")
+        print("  |-> EXEMPLO: python main.py teste.lua")
         return
     
-    expression = sys.argv[1]
+    file = sys.argv[1]
+    if file[-4:] != ".lua":
+        print("Erro: Arquivo inválido. Deve ser do tipo .lua")
+        sys.stderr.write("Erro: Arquivo inválido. Deve ser do tipo .lua")
+        return
+    with open(file, "r") as f:
+        file = f.read()
+    
     left, right = 0, 0
-    for char in expression:
+    for char in file:
         if char == '(':
             left += 1
         if char == ')':
@@ -200,7 +207,7 @@ def main():
         return
 
     else:
-        Parser.run(sys.argv[1])
+        Parser.run(file)
 
 if __name__ == "__main__":
     main()
