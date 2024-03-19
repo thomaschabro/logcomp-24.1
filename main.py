@@ -1,8 +1,8 @@
 import sys
 from abc import abstractmethod
 
-class PrePro():
-    def filter(self, code):
+class PrePro:
+    def filter(code):
         i = 0
         while i < len(code):
             if code[i] == "-":
@@ -24,11 +24,14 @@ class Tokenizer():
         self.next = next
     
     def selectNext(self):
-        if self.position < len(self.source):
+        if self.position >= len(self.source):
+            self.next = Token("EOF", None)
 
+        
+        else:
             if self.source[self.position] == " ":
-                self.position += 1
-                self.selectNext()
+                while self.position < len(self.source) and self.source[self.position] == " ":
+                    self.position += 1
             if self.source[self.position] == "+":
                 self.position += 1
                 self.next = Token("PLUS", "+")
@@ -53,13 +56,15 @@ class Tokenizer():
                     number += self.source[self.position]
                     self.position += 1
                 self.next = Token("NUMBER", number)
-        else:
-            self.next = Token("EOF", "")
 
 class Node():
     def __init__ (self, value:int, children=None):
         self.value = value
         self.children = children if children is not None else []
+
+    @abstractmethod
+    def Evaluate(self):
+        pass
 
 class BinOp(Node):
     def __init__(self, value, children):
@@ -168,16 +173,15 @@ class Parser:
         
 
     def run(code):
-        code_filtrado = PrePro().filter(code)
+        code_filtrado = PrePro.filter(code=code)
         tokenizer = Tokenizer(code_filtrado, 0, None)
-        resultado = Parser.parseExpression(tokenizer)
-        resultado = resultado.Evaluate()
-        tokenizer.selectNext()
-        if tokenizer.next.type != "EOF":
-            # sys.stderr.write("Erro de sintaxe. Fim de arquivo esperado. (11)")
-            raise Exception("Erro de sintaxe. Fim de arquivo esperado. (11)")
+        resultado = Parser(tokenizer)
+        result = Parser.parseExpression(tok=tokenizer)
+        if resultado.tokenizer.next.type != "EOF":
+            sys.stderr.write("Erro de sintaxe. Fim de arquivo esperado. (11)")
         else:
-            print(resultado)
+            sys.stdout.write(str(int(result.Evaluate())))
+            return(resultado)
 
 def main():
     if len(sys.argv) != 2:
