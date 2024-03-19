@@ -30,9 +30,9 @@ class Tokenizer():
         
         else:
             if self.source[self.position] == " ":
-                while self.position < len(self.source) and self.source[self.position] == " ":
-                    self.position += 1
-            if self.source[self.position] == "+":
+                self.position += 1
+                self.selectNext()
+            elif self.source[self.position] == "+":
                 self.position += 1
                 self.next = Token("PLUS", "+")
             elif self.source[self.position] == "-":
@@ -181,7 +181,6 @@ class Parser:
             sys.stderr.write("Erro de sintaxe. Fim de arquivo esperado. (11)")
         else:
             sys.stdout.write(str(int(result.Evaluate())))
-            return(resultado)
 
 def main():
     if len(sys.argv) != 2:
