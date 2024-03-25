@@ -291,12 +291,12 @@ class Parser:
         tokenizer = Tokenizer(code_filtrado, 0, None)
         ast = Parser.parseBlock(tokenizer)
         st = SymbolTable()
-        ast.evaluate(st)
+        resultado = ast.evaluate(st)
         if tokenizer.next is not None:
             sys.stderr.write("Erro de sintaxe. EOF esperado. (2)")
             sys.exit(1)
         else:
-            return
+            return resultado
 
 
 class SymbolTable:
