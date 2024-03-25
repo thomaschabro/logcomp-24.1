@@ -140,7 +140,11 @@ class Identifier(Node):
         super()._init_(value, [])
 
     def Evaluate(self, st):
-        return st.get(self.value)
+        if st.get(self.value) is None:
+            sys.stderr.write("Erro: Variável não definida.")
+            sys.exit(1)
+        else:
+            return st.get(self.value)
 
 class Assign(Node):
     def _init_(self, children):
@@ -206,15 +210,16 @@ class Parser:
             numero = tok.next.value
             tok.selectNext()
             return IntVal(numero)
-        elif tok.next != None and tok.next.type == "PLUS":
+        elif tok.next is not None and tok.next.type == "PLUS":
             tok.selectNext()
             numero = UnOp("+", [Parser.parseFactor(tok)])
             return numero
-        elif tok.next != None and tok.next.type == "MINUS":
+        elif tok.next is not None and tok.next.type == "MINUS":
             tok.selectNext()
             numero = UnOp("-", [Parser.parseFactor(tok)])
             return numero
-        elif tok.next != None and tok.next.type == "LPAREN":
+        elif tok.next is not None and tok.next.type == "LPAREN":
+            tok.selectNext()
             resultado = Parser.parseExpression(tok)
             if tok.next.type != "RPAREN":
                 sys.stderr.write("Erro de sintaxe. ')' esperado. (9)")
@@ -223,9 +228,9 @@ class Parser:
                 tok.selectNext()
                 return resultado
         elif tok.next.type == "IDEN":
-            id = Identifier(tok.next.value)
+            id_saida = Identifier(tok.next.value)
             tok.selectNext()
-            return id
+            return id_saida
         else:
             sys.stderr.write("Erro de sintaxe. Número ou '(' esperado. (10)")
             sys.exit(1)
