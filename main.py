@@ -3,14 +3,23 @@ from abc import abstractmethod
 
 class PrePro:
     def filter(code):
+        code_limpo = ""
         i = 0
         while i < len(code):
-            if code[i] == "-":
-                if code[i+1] == "-":
-                    code = code[:i]
-                    break
+            if code[i] == '-' and i + 1 < len(code) and code[i + 1] == '-':
+                while i < len(code) and code[i] != '\n':
+                    i += 1
+                if i == len(code) or code[i] != '\n':
+                    code_limpo += "\n"
+            elif code[i] == '\n':
+                code_limpo += code[i]
+                while i + 1 < len(code) and code[i + 1] == '\n':
+                    i += 1
+            else:
+                code_limpo += code[i]
             i += 1
-        return code
+
+        return code_limpo
 
 class Token():
     def __init__(self, type, value):
@@ -159,18 +168,15 @@ class Parser:
 
     def parseExpression(tok):
         resultado = Parser.parseTerm(tok)
-
         while (1):
-            if tok.next == None:
-                return resultado
-            if tok.next.type == "PLUS":
+            if tok.next is not None and tok.next.type == "PLUS":
                 tok.selectNext()
                 if tok.next.type != "NUMBER" and tok.next.type != "LPAREN" and tok.next.type != "PLUS" and tok.next.type != "MINUS":
                     sys.stderr.write("Erro de sintaxe. Número ou '(' esperado. (6)")
                     sys.exit(1)
                 else:
                     resultado = BinOp("+", [resultado, Parser.parseTerm(tok)])
-            elif tok.next.type == "MINUS":
+            elif tok.next is not None and tok.next.type == "MINUS":
                 tok.selectNext()
                 if tok.next.type != "NUMBER" and tok.next.type != "LPAREN" and tok.next.type != "PLUS" and tok.next.type != "MINUS":
                     sys.stderr.write("Erro de sintaxe. Número ou '(' esperado. (6)")
@@ -182,11 +188,8 @@ class Parser:
 
     def parseTerm(tok):
         resultado = Parser.parseFactor(tok)
-
         while (1):
-            if tok.next == None:
-                return resultado
-            if tok.next.type == "TIMES":
+            if tok.next is not None and tok.next.type == "TIMES":
                 tok.selectNext()
                 if tok.next.type != "NUMBER" and tok.next.type != "LPAREN" and tok.next.type != "PLUS" and tok.next.type != "MINUS":
                     sys.stderr.write("Erro de sintaxe. Número ou '(' esperado. (7)")
@@ -194,7 +197,7 @@ class Parser:
                 else:
                     resultado = BinOp("*", [resultado, Parser.parseFactor(tok)])
 
-            elif tok.next.type == "DIV":
+            elif tok.next is not None and tok.next.type == "DIV":
                 tok.selectNext()
                 if tok.next.type != "NUMBER" and tok.next.type != "LPAREN" and tok.next.type != "PLUS" and tok.next.type != "MINUS":
                     sys.stderr.write("Erro de sintaxe. Número ou '(' esperado. (7)")
@@ -278,6 +281,7 @@ class Parser:
         return resultado
 
     def parseBlock(tok):
+        saida = []
         while tok.next is not None:
             saida = Parser.parseStatementList(tok)
         return Block(saida)
@@ -285,7 +289,6 @@ class Parser:
     def run(code):
         code_filtrado = PrePro.filter(code=code)
         tokenizer = Tokenizer(code_filtrado, 0, None)
-        tokenizer.selectNext()
         ast = Parser.parseBlock(tokenizer)
         st = SymbolTable()
         ast.evaluate(st)
