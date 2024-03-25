@@ -50,16 +50,24 @@ class Tokenizer():
             elif self.source[self.position] == ")":
                 self.position += 1
                 self.next = Token("RPAREN", ")")
+            elif self.source[self.position] == "\n":
+                self.position += 1
+                self.next = Token("NL", "\n")
             elif self.source[self.position].isdigit():
                 number = ""
                 while self.position < len(self.source) and self.source[self.position].isdigit():
                     number += self.source[self.position]
                     self.position += 1
                 self.next = Token("NUMBER", number)
-            elif self.source[self.position] == "p":
-                if self.source[self.position:self.position+5] == "print":
-                    self.position += 5
-                    self.next = Token("PRINT", "print")
+            elif self.source[self.position].isalpha():
+                iden = ""
+                while self.position < len(self.source) and self.source[self.position].isalpha():
+                    iden += self.source[self.position]
+                    self.position += 1
+                if iden == "print":
+                    self.next = Token("PRINT", iden)
+                else:
+                    self.next = Token("IDEN", iden)
                 
             
 
@@ -117,6 +125,13 @@ class Block(Node):
     def evaluate(self, st):
         for child in self.children:
             child.evaluate(st)
+
+class Identifier(Node):
+    def _init_(self, value):
+        super()._init_(value, [])
+
+    def evaluate(self, st):
+        return st.get(self.value)
 
 class Assign(Node):
     def _init_(self, children):
@@ -194,6 +209,10 @@ class Parser:
             else:
                 tok.selectNext()
                 return resultado
+        elif tok.next.type == "IDEN":
+            id = Identifier(tok.next.value)
+            tok.selectNext()
+            return id
         else:
             sys.stderr.write("Erro de sintaxe. Número ou '(' esperado. (10)")
             sys.exit(1)
@@ -205,8 +224,8 @@ class Parser:
             if tok.next.type == "ASSIGN":
                 tok.selectNext()
                 saida = Parser.parseExpression(tok)
-                if tok.next.type != "EOF" and tok.next.type != "END":
-                    sys.stderr.write("Erro de sintaxe. Fim de arquivo esperado. (11)")
+                if tok.next.type != "NL":
+                    sys.stderr.write("Erro de sintaxe. New Line esperado. (11)")
                     sys.exit(1)
                 else:
                     tok.selectNext()
@@ -226,29 +245,27 @@ class Parser:
                 if tok.next.type != "RPAREN":
                     sys.stderr.write("Erro de sintaxe. ')' esperado. (5)")
                     sys.exit(1)
-                else:
-                    tok.selectNext()
-                    return saida
-                
-        elif tok.next.type == "NL":
-            tok.selectNext()
-            return NoOp()
-        
+                tok.selectNext()
+                if tok.next.type != "NL":
+                    sys.stderr.write("Erro de sintaxe. Nova linha esperada. (6)")
+                    sys.exit(1)
+                tok.selectNext()
+                return saida
         else:
-            sys.stderr.write("Erro de sintaxe. Comando esperado. (8)")
+            sys.stderr.write("Erro de sintaxe. Comando esperado. (7)")
             sys.exit(1)
 
 
     def parseStatementList(tok):
         resultado = []
-        while tok.next.type != "END":
+        while tok.next.type != None:
             resultado.append(Parser.parseStatement(tok))
         return resultado
 
     def parseBlock(tok):
         while tok.next.type != "EOF":
             saida = Parser.parseStatementList(tok)
-            
+        return Block(saida)
 
     def run(code):
         code_filtrado = PrePro.filter(code=code)
