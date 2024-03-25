@@ -90,25 +90,25 @@ class BinOp(Node):
     def __init__(self, value, children):
         super().__init__(value, children)
 
-    def Evaluate(self):
+    def Evaluate(self, st):
         if self.value == "+":
-            return int(self.children[0].Evaluate()) + int(self.children[1].Evaluate())
+            return int(self.children[0].Evaluate(st)) + int(self.children[1].Evaluate(st))
         elif self.value == "-":
-            return int(self.children[0].Evaluate()) - int(self.children[1].Evaluate())
+            return int(self.children[0].Evaluate(st)) - int(self.children[1].Evaluate(st))
         elif self.value == "*":
-            return int(self.children[0].Evaluate()) * int(self.children[1].Evaluate())
+            return int(self.children[0].Evaluate(st)) * int(self.children[1].Evaluate(st))
         elif self.value == "/":
-            return int(self.children[0].Evaluate()) // int(self.children[1].Evaluate())
+            return int(self.children[0].Evaluate(st)) // int(self.children[1].Evaluate(st))
 
 class UnOp(Node):
     def __init__(self, value, children):
         super().__init__(value, children)
 
-    def Evaluate(self):
+    def Evaluate(self, st):
         if self.value == "+":
-            return int(self.children[0].Evaluate())
+            return int(self.children[0].Evaluate(st))
         elif self.value == "-":
-            return int(-self.children[0].Evaluate())
+            return int(-self.children[0].Evaluate(st))
         
 class IntVal(Node):
     def __init__(self, value):
@@ -145,6 +145,13 @@ class Assign(Node):
 
     def evaluate(self, st):
         st.set(self.children[0].value, self.children[1].evaluate(st))
+
+class Print(Node):
+    def _init_(self, children):
+        super()._init_(None, children)
+
+    def evaluate(self, st):
+        print(self.children[0].evaluate(st))
         
 class Parser:
     def __init__(self, tokenizer):
@@ -154,6 +161,8 @@ class Parser:
         resultado = Parser.parseTerm(tok)
 
         while (1):
+            if tok.next == None:
+                return resultado
             if tok.next.type == "PLUS":
                 tok.selectNext()
                 if tok.next.type != "NUMBER" and tok.next.type != "LPAREN" and tok.next.type != "PLUS" and tok.next.type != "MINUS":
@@ -175,6 +184,8 @@ class Parser:
         resultado = Parser.parseFactor(tok)
 
         while (1):
+            if tok.next == None:
+                return resultado
             if tok.next.type == "TIMES":
                 tok.selectNext()
                 if tok.next.type != "NUMBER" and tok.next.type != "LPAREN" and tok.next.type != "PLUS" and tok.next.type != "MINUS":
@@ -198,15 +209,15 @@ class Parser:
             numero = tok.next.value
             tok.selectNext()
             return IntVal(numero)
-        elif tok.next.type == "PLUS":
+        elif tok.next != None and tok.next.type == "PLUS":
             tok.selectNext()
             numero = UnOp("+", [Parser.parseFactor(tok)])
             return numero
-        elif tok.next.type == "MINUS":
+        elif tok.next != None and tok.next.type == "MINUS":
             tok.selectNext()
             numero = UnOp("-", [Parser.parseFactor(tok)])
             return numero
-        elif tok.next.type == "LPAREN":
+        elif tok.next != None and tok.next.type == "LPAREN":
             resultado = Parser.parseExpression(tok)
             if tok.next.type != "RPAREN":
                 sys.stderr.write("Erro de sintaxe. ')' esperado. (9)")
@@ -235,6 +246,9 @@ class Parser:
                 else:
                     tok.selectNext()
                     return Assign([Identifier(id), saida])
+            else:
+                sys.stderr.write("Erro de sintaxe. '=' esperado. (31)")
+                sys.exit(1)
         elif tok.next.type == "PRINT":
             tok.selectNext()
             if tok.next.type != "LPAREN":
@@ -251,23 +265,20 @@ class Parser:
                     sys.stderr.write("Erro de sintaxe. Nova linha esperada. (6)")
                     sys.exit(1)
                 tok.selectNext()
-                return saida
-
+                print = Print([saida])
+                return print
         else:
             sys.stderr.write("Erro de sintaxe. '=' esperado. (3)")
             sys.exit(1)
             
     def parseStatementList(tok):
         resultado = []
-        while tok.next.type != None:
+        while tok.next is not None:
             resultado.append(Parser.parseStatement(tok))
-        print(" - - - - ")
-        print(resultado)
         return resultado
 
     def parseBlock(tok):
-        while tok.next.type is not None:
-            print(tok.next.type)
+        while tok.next is not None:
             saida = Parser.parseStatementList(tok)
         return Block(saida)
 
@@ -278,7 +289,7 @@ class Parser:
         ast = Parser.parseBlock(tokenizer)
         st = SymbolTable()
         ast.evaluate(st)
-        if tokenizer.next.type != "EOF":
+        if tokenizer.next is not None:
             sys.stderr.write("Erro de sintaxe. EOF esperado. (2)")
             sys.exit(1)
         else:
