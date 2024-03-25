@@ -154,7 +154,7 @@ class Print(Node):
         super()._init_(None, children)
 
     def Evaluate(self, st):
-        sys.stdout.write(str(int(self.children[0].Evaluate(st))))
+        sys.stdout.write(str(int(self.children[0].Evaluate(st))) + "\n")
         
 class Parser:
     def __init__(self, tokenizer):
@@ -276,7 +276,6 @@ class Parser:
 
     def run(code):
         code_filtrado = PrePro.filter(code=code)
-        print(code_filtrado)
         tokenizer = Tokenizer(code_filtrado, 0, None)
         tokenizer.selectNext()
         ast = Parser.parseBlock(tokenizer)
