@@ -25,7 +25,7 @@ class Tokenizer():
     
     def selectNext(self):
         if self.position >= len(self.source):
-            self.next = Token("EOF", None)
+            self.next = None
 
         
         else:
@@ -53,6 +53,9 @@ class Tokenizer():
             elif self.source[self.position] == "\n":
                 self.position += 1
                 self.next = Token("NL", "\n")
+            elif self.source[self.position] == "=":
+                self.position += 1
+                self.next = Token("ASSIGN", "=")
             elif self.source[self.position].isdigit():
                 number = ""
                 while self.position < len(self.source) and self.source[self.position].isdigit():
@@ -68,7 +71,10 @@ class Tokenizer():
                     self.next = Token("PRINT", iden)
                 else:
                     self.next = Token("IDEN", iden)
-                
+            else:
+                sys.stderr.write("Erro de sintaxe. Caractere inválido. (1)")
+                sys.exit(1)
+                return
             
 
 class Node():
@@ -145,7 +151,6 @@ class Parser:
         self.tokenizer = tokenizer
 
     def parseExpression(tok):
-        tok.selectNext()
         resultado = Parser.parseTerm(tok)
 
         while (1):
@@ -229,11 +234,7 @@ class Parser:
                     sys.exit(1)
                 else:
                     tok.selectNext()
-                    return Assign([id, saida])
-            else:
-                sys.stderr.write("Erro de sintaxe. '=' esperado. (3)")
-                sys.exit(1)
-        
+                    return Assign([Identifier(id), saida])
         elif tok.next.type == "PRINT":
             tok.selectNext()
             if tok.next.type != "LPAREN":
@@ -251,32 +252,37 @@ class Parser:
                     sys.exit(1)
                 tok.selectNext()
                 return saida
+
         else:
-            sys.stderr.write("Erro de sintaxe. Comando esperado. (7)")
+            sys.stderr.write("Erro de sintaxe. '=' esperado. (3)")
             sys.exit(1)
-
-
+            
     def parseStatementList(tok):
         resultado = []
         while tok.next.type != None:
             resultado.append(Parser.parseStatement(tok))
+        print(" - - - - ")
+        print(resultado)
         return resultado
 
     def parseBlock(tok):
-        while tok.next.type != "EOF":
+        while tok.next.type is not None:
+            print(tok.next.type)
             saida = Parser.parseStatementList(tok)
         return Block(saida)
 
     def run(code):
         code_filtrado = PrePro.filter(code=code)
         tokenizer = Tokenizer(code_filtrado, 0, None)
-        resultado = Parser(tokenizer)
-        result = Parser.parseExpression(tok=tokenizer)
-        if resultado.tokenizer.next.type != "EOF":
-            sys.stderr.write("Erro de sintaxe. Fim de arquivo esperado. (11)")
+        tokenizer.selectNext()
+        ast = Parser.parseBlock(tokenizer)
+        st = SymbolTable()
+        ast.evaluate(st)
+        if tokenizer.next.type != "EOF":
+            sys.stderr.write("Erro de sintaxe. EOF esperado. (2)")
             sys.exit(1)
         else:
-            sys.stdout.write(str(int(result.Evaluate())))
+            return
 
 
 class SymbolTable:
