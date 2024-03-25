@@ -140,11 +140,7 @@ class Identifier(Node):
         super()._init_(value, [])
 
     def Evaluate(self, st):
-        if st.get(self.value) is None:
-            sys.stderr.write("Erro: Variável não definida.")
-            sys.exit(1)
-        else:
-            return st.get(self.value)
+        return st.get(self.value)
 
 class Assign(Node):
     def _init_(self, children):
@@ -169,14 +165,14 @@ class Parser:
         while (1):
             if tok.next is not None and tok.next.type == "PLUS":
                 tok.selectNext()
-                if tok.next.type != "NUMBER" and tok.next.type != "LPAREN" and tok.next.type != "PLUS" and tok.next.type != "MINUS":
-                    sys.stderr.write("Erro de sintaxe. Número ou '(' esperado. (6)")
+                if tok.next.type != "NUMBER" and tok.next.type != "LPAREN" and tok.next.type != "PLUS" and tok.next.type != "MINUS" and tok.next.type != "IDEN":
+                    sys.stderr.write("Erro de sintaxe. Número ou '(' esperado. (6 0 1)")
                     sys.exit(1)
                 else:
                     resultado = BinOp("+", [resultado, Parser.parseTerm(tok)])
             elif tok.next is not None and tok.next.type == "MINUS":
                 tok.selectNext()
-                if tok.next.type != "NUMBER" and tok.next.type != "LPAREN" and tok.next.type != "PLUS" and tok.next.type != "MINUS":
+                if tok.next.type != "NUMBER" and tok.next.type != "LPAREN" and tok.next.type != "PLUS" and tok.next.type != "MINUS" and tok.next.type != "IDEN":
                     sys.stderr.write("Erro de sintaxe. Número ou '(' esperado. (6)")
                     sys.exit(1)
                 else:
@@ -189,7 +185,7 @@ class Parser:
         while (1):
             if tok.next is not None and tok.next.type == "TIMES":
                 tok.selectNext()
-                if tok.next.type != "NUMBER" and tok.next.type != "LPAREN" and tok.next.type != "PLUS" and tok.next.type != "MINUS":
+                if tok.next.type != "NUMBER" and tok.next.type != "LPAREN" and tok.next.type != "PLUS" and tok.next.type != "MINUS" and tok.next.type != "IDEN":
                     sys.stderr.write("Erro de sintaxe. Número ou '(' esperado. (7)")
                     sys.exit(1)
                 else:
@@ -197,7 +193,7 @@ class Parser:
 
             elif tok.next is not None and tok.next.type == "DIV":
                 tok.selectNext()
-                if tok.next.type != "NUMBER" and tok.next.type != "LPAREN" and tok.next.type != "PLUS" and tok.next.type != "MINUS":
+                if tok.next.type != "NUMBER" and tok.next.type != "LPAREN" and tok.next.type != "PLUS" and tok.next.type != "MINUS" and tok.next.type != "IDEN":
                     sys.stderr.write("Erro de sintaxe. Número ou '(' esperado. (7)")
                     sys.exit(1)
                 else:
@@ -247,7 +243,7 @@ class Parser:
                     sys.exit(1)
                 else:
                     tok.selectNext()
-                    return Assign([Identifier(iden), saida])
+                    return Assign(value="assign",children=[Identifier(iden), saida])
             else:
                 sys.stderr.write("Erro de sintaxe. '=' esperado. (31)")
                 sys.exit(1)
@@ -267,19 +263,20 @@ class Parser:
                     sys.stderr.write("Erro de sintaxe. Nova linha esperada. (6)")
                     sys.exit(1)
                 tok.selectNext()
-                return Print([saida])
+                return Print(value="print", children=[saida])
         else:
             sys.stderr.write("Erro de sintaxe. '=' esperado. (3)")
             sys.exit(1)
 
     def parseBlock(tok):
-        saida = []
+        saida = Block([])
         while tok.next is not None:
-            saida.append(Parser.parseStatement(tok))
-        return Block(saida)
+            saida.children.append(Parser.parseStatement(tok))
+        return saida
 
     def run(code):
         code_filtrado = PrePro.filter(code=code)
+        print(code_filtrado)
         tokenizer = Tokenizer(code_filtrado, 0, None)
         tokenizer.selectNext()
         ast = Parser.parseBlock(tokenizer)
@@ -289,7 +286,6 @@ class Parser:
             sys.stderr.write("Erro de sintaxe. EOF esperado. (2)")
             sys.exit(1)
         else:
-            sys.stdout.write(str(resultado))
             return resultado
 
 
