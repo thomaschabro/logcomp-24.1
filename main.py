@@ -131,31 +131,30 @@ class Block(Node):
     def _init_(self, children):
         super()._init_(None, children)
 
-    def evaluate(self, st):
+    def Evaluate(self, st):
         for child in self.children:
-            child.evaluate(st)
+            child.Evaluate(st)
 
 class Identifier(Node):
     def _init_(self, value):
         super()._init_(value, [])
 
-    def evaluate(self, st):
+    def Evaluate(self, st):
         return st.get(self.value)
 
 class Assign(Node):
     def _init_(self, children):
         super()._init_(None, children)
 
-    def evaluate(self, st):
-        st.set(self.children[0].value, self.children[1].evaluate(st))
+    def Evaluate(self, st):
+        st.set(self.children[0].value, self.children[1].Evaluate(st))
 
 class Print(Node):
     def _init_(self, children):
         super()._init_(None, children)
 
-    def evaluate(self, st):
-        print(int(self.children[0].evaluate(st)))
-        sys.stdout.write(str(int(self.children[0].evaluate(st))))
+    def Evaluate(self, st):
+        sys.stdout.write(str(int(self.children[0].Evaluate(st))))
         
 class Parser:
     def __init__(self, tokenizer):
@@ -280,11 +279,12 @@ class Parser:
         tokenizer.selectNext()
         ast = Parser.parseBlock(tokenizer)
         st = SymbolTable()
-        resultado = ast.evaluate(st)
+        resultado = ast.Evaluate(st)
         if tokenizer.next is not None:
             sys.stderr.write("Erro de sintaxe. EOF esperado. (2)")
             sys.exit(1)
         else:
+            sys.stdout.write(str(resultado))
             return resultado
 
 
