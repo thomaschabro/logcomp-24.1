@@ -3,24 +3,18 @@ from abc import abstractmethod
 
 class PrePro:
     def filter(code):
-        code_limpo = ""
-        i = 0
-        while i < len(code):
-            if code[i] == '-' and i + 1 < len(code) and code[i + 1] == '-':
-                while i < len(code) and code[i] != '\n':
-                    i += 1
-                if i == len(code) or code[i] != '\n':
-                    code_limpo += "\n"
-            elif code[i] == '\n':
-                code_limpo += code[i]
-                while i + 1 < len(code) and code[i + 1] == '\n':
-                    i += 1
-            else:
-                code_limpo += code[i]
-            i += 1
-
-        return code_limpo
-
+        filtered_lines = []
+        output = ""
+        for line in code.split('\n'):
+            line = line.strip()
+            if line and not line.startswith('--'):
+                if line.find("--") != -1:
+                    line = line[:line.find("--")]
+                filtered_lines.append(line)
+        for line in filtered_lines:
+            output += line + "\n"
+        return output
+    
 class Token():
     def __init__(self, type, value):
         self.type = type
@@ -73,7 +67,7 @@ class Tokenizer():
                 self.next = Token("NUMBER", number)
             elif self.source[self.position].isalpha():
                 iden = ""
-                while self.position < len(self.source) and self.source[self.position].isalpha():
+                while self.position < len(self.source) and self.source[self.position].isalpha() or self.source[self.position].isdigit() or self.source[self.position] == '_':
                     iden += self.source[self.position]
                     self.position += 1
                 if iden == "print":
@@ -123,14 +117,14 @@ class IntVal(Node):
     def __init__(self, value):
         super().__init__(value, [])
 
-    def Evaluate(self):
+    def Evaluate(self, st):
         return int(self.value)
     
 class NoOp(Node):
     def __init__(self):
         super().__init__(None, [])
 
-    def Evaluate(self):
+    def Evaluate(self, st):
         pass
 
 class Block(Node):
@@ -160,7 +154,8 @@ class Print(Node):
         super()._init_(None, children)
 
     def evaluate(self, st):
-        sys.stdout.write(str(self.children[0].evaluate(st)))
+        print(int(self.children[0].evaluate(st)))
+        sys.stdout.write(str(int(self.children[0].evaluate(st))))
         
 class Parser:
     def __init__(self, tokenizer):
@@ -238,7 +233,7 @@ class Parser:
 
     def parseStatement(tok):
         if tok.next.type == "IDEN":
-            id = tok.next.value
+            iden = tok.next.value
             tok.selectNext()
             if tok.next.type == "ASSIGN":
                 tok.selectNext()
@@ -248,7 +243,7 @@ class Parser:
                     sys.exit(1)
                 else:
                     tok.selectNext()
-                    return Assign([Identifier(id), saida])
+                    return Assign([Identifier(iden), saida])
             else:
                 sys.stderr.write("Erro de sintaxe. '=' esperado. (31)")
                 sys.exit(1)
@@ -268,22 +263,15 @@ class Parser:
                     sys.stderr.write("Erro de sintaxe. Nova linha esperada. (6)")
                     sys.exit(1)
                 tok.selectNext()
-                print = Print([saida])
-                return print
+                return Print([saida])
         else:
             sys.stderr.write("Erro de sintaxe. '=' esperado. (3)")
             sys.exit(1)
-            
-    def parseStatementList(tok):
-        resultado = []
-        while tok.next is not None:
-            resultado.append(Parser.parseStatement(tok))
-        return resultado
 
     def parseBlock(tok):
         saida = []
         while tok.next is not None:
-            saida = Parser.parseStatementList(tok)
+            saida.append(Parser.parseStatement(tok))
         return Block(saida)
 
     def run(code):
@@ -309,11 +297,7 @@ class SymbolTable:
         self.table[key] = value
     
     def get(self, key):
-        if key not in self.table:
-            sys.stderr.write("Erro: GET de variável não existente.")
-            sys.exit(1)
-        else:
-            return self.table[key]
+        return self.table[key]
 
 def main():
     if len(sys.argv) != 2:
