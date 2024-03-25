@@ -285,7 +285,6 @@ class Parser:
             sys.stderr.write("Erro de sintaxe. EOF esperado. (2)")
             sys.exit(1)
         else:
-            sys.stdout.write(str(resultado))
             return resultado
 
 
