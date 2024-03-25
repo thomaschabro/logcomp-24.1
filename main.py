@@ -161,6 +161,7 @@ class Print(Node):
 
     def evaluate(self, st):
         print(self.children[0].evaluate(st))
+        sys.stdout.write(str(self.children[0].evaluate(st)))
         
 class Parser:
     def __init__(self, tokenizer):
