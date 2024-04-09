@@ -213,7 +213,7 @@ class Read(Node):
         super()._init_(None, children)
 
     def Evaluate(self, st):
-        return int(input())
+        return self.value
         
 class Parser:
     def __init__(self, tokenizer):
@@ -290,6 +290,19 @@ class Parser:
             id_saida = Identifier(tok.next.value)
             tok.selectNext()
             return id_saida
+        elif tok.next.type == "READ":
+            tok.selectNext()
+            if tok.next.type != "LPAREN":
+                sys.stderr.write("Erro de sintaxe. '(' esperado. (10)")
+                sys.exit(1)
+            else:
+                tok.selectNext()
+                if tok.next.type != "RPAREN":
+                    sys.stderr.write("Erro de sintaxe. ')' esperado. (11)")
+                    sys.exit(1)
+                else:
+                    tok.selectNext()
+                    return Read(value=int(input()))
         else:
             sys.stderr.write("Erro de sintaxe. Número ou '(' esperado. (10)")
             sys.exit(1)
@@ -356,6 +369,10 @@ class Parser:
                 tok.selectNext()
                 return If(value="if", children=[condicao, bloco1, bloco2])
             elif tok.next.type == "END":
+                tok.selectNext()
+                if tok.next.type != "NL":
+                    sys.stderr.write("Erro de sintaxe. Nova linha esperada após END. (10)")
+                    sys.exit(1)
                 tok.selectNext()
                 return If(value="if", children=[condicao, bloco1])
             else:
