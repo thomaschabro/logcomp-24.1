@@ -25,12 +25,23 @@ class Tokenizer():
         self.source = source
         self.position = position
         self.next = next
+        self.list = [
+            "print",
+            "if",
+            "then",
+            "else",
+            "end",
+            "while",
+            "do",
+            "and",
+            "or",
+            "not",
+            "read" ]
     
     def selectNext(self):
         if self.position >= len(self.source):
             self.next = None
 
-        
         else:
             if self.source[self.position] == " ":
                 self.position += 1
@@ -56,9 +67,19 @@ class Tokenizer():
             elif self.source[self.position] == "\n":
                 self.position += 1
                 self.next = Token("NL", "\n")
+            elif self.source[self.position] == ">":
+                self.position += 1
+                self.next = Token("GT", ">")
+            elif self.source[self.position] == "<":
+                self.position += 1
+                self.next = Token("LT", "<")
             elif self.source[self.position] == "=":
                 self.position += 1
-                self.next = Token("ASSIGN", "=")
+                if self.position < len(self.source) and self.source[self.position] == "=":
+                    self.position += 1
+                    self.next = Token("EQ", "==")
+                else:
+                    self.next = Token("ASSIGN", "=")
             elif self.source[self.position].isdigit():
                 number = ""
                 while self.position < len(self.source) and self.source[self.position].isdigit():
@@ -70,8 +91,8 @@ class Tokenizer():
                 while self.position < len(self.source) and self.source[self.position].isalpha() or self.source[self.position].isdigit() or self.source[self.position] == '_':
                     iden += self.source[self.position]
                     self.position += 1
-                if iden == "print":
-                    self.next = Token("PRINT", iden)
+                if iden in self.list:
+                    self.next = Token(iden.upper(), iden)
                 else:
                     self.next = Token("IDEN", iden)
             else:
@@ -102,6 +123,16 @@ class BinOp(Node):
             return int(self.children[0].Evaluate(st)) * int(self.children[1].Evaluate(st))
         elif self.value == "/":
             return int(self.children[0].Evaluate(st)) // int(self.children[1].Evaluate(st))
+        elif self.value == "==":
+            return int(self.children[0].Evaluate(st)) == int(self.children[1].Evaluate(st))
+        elif self.value == ">":
+            return int(self.children[0].Evaluate(st)) > int(self.children[1].Evaluate(st))
+        elif self.value == "<":
+            return int(self.children[0].Evaluate(st)) < int(self.children[1].Evaluate(st))
+        elif self.value == "and":
+            return int(self.children[0].Evaluate(st)) and int(self.children[1].Evaluate(st))
+        elif self.value == "or":
+            return int(self.children[0].Evaluate(st)) or int(self.children[1].Evaluate(st))
 
 class UnOp(Node):
     def __init__(self, value, children):
@@ -112,6 +143,8 @@ class UnOp(Node):
             return int(self.children[0].Evaluate(st))
         elif self.value == "-":
             return int(-self.children[0].Evaluate(st))
+        elif self.value == "not":
+            return int(not self.children[0].Evaluate(st))
         
 class IntVal(Node):
     def __init__(self, value):
@@ -155,6 +188,32 @@ class Print(Node):
 
     def Evaluate(self, st):
         sys.stdout.write(str(int(self.children[0].Evaluate(st))) + "\n")
+
+class If(Node):
+    def _init_(self, children):
+        super()._init_(None, children)
+
+    def Evaluate(self, st):
+        if self.children[0].Evaluate(st):
+            self.children[1].Evaluate(st)
+        elif len(self.children) == 3:
+            self.children[2].Evaluate(st)
+
+class While(Node):
+    def _init_(self, children):
+        super()._init_(None, children)
+
+    def Evaluate(self, st):
+        while self.children[0].Evaluate(st):
+            for child in self.children[1]:
+                child.Evaluate(st)
+
+class Read(Node):
+    def _init_(self, children):
+        super()._init_(None, children)
+
+    def Evaluate(self, st):
+        return int(input())
         
 class Parser:
     def __init__(self, tokenizer):
@@ -214,9 +273,13 @@ class Parser:
             tok.selectNext()
             numero = UnOp("-", [Parser.parseFactor(tok)])
             return numero
+        elif tok.next is not None and tok.next.type == "NOT":
+            tok.selectNext()
+            numero = UnOp("not", [Parser.parseFactor(tok)])
+            return numero
         elif tok.next is not None and tok.next.type == "LPAREN":
             tok.selectNext()
-            resultado = Parser.parseExpression(tok)
+            resultado = Parser.parseBoolExp(tok)
             if tok.next.type != "RPAREN":
                 sys.stderr.write("Erro de sintaxe. ')' esperado. (9)")
                 sys.exit(1)
@@ -237,7 +300,7 @@ class Parser:
             tok.selectNext()
             if tok.next.type == "ASSIGN":
                 tok.selectNext()
-                saida = Parser.parseExpression(tok)
+                saida = Parser.parseBoolExp(tok)
                 if tok.next.type != "NL":
                     sys.stderr.write("Erro de sintaxe. New Line esperado. (11)")
                     sys.exit(1)
@@ -254,19 +317,107 @@ class Parser:
                 sys.exit(1)
             else:
                 tok.selectNext()
-                saida = Parser.parseExpression(tok)
+                saida = Parser.parseBoolExp(tok)
                 if tok.next.type != "RPAREN":
                     sys.stderr.write("Erro de sintaxe. ')' esperado. (5)")
                     sys.exit(1)
                 tok.selectNext()
                 if tok.next.type != "NL":
-                    sys.stderr.write("Erro de sintaxe. Nova linha esperada. (6)")
+                    sys.stderr.write("Erro de sintaxe. Nova linha esperada após RPAREN. (6)")
                     sys.exit(1)
                 tok.selectNext()
                 return Print(value="print", children=[saida])
+        elif tok.next.type == "IF":
+            tok.selectNext()
+            condicao = Parser.parseBoolExp(tok)
+            if tok.next.type != "THEN":
+                sys.stderr.write("Erro de sintaxe. 'then' esperado. (7)")
+                sys.exit(1)
+            tok.selectNext()
+            if tok.next.type != "NL":
+                sys.stderr.write("Erro de sintaxe. Nova linha esperada após THEN. (8)")
+                sys.exit(1)
+            tok.selectNext()
+            bloco1 = Parser.parseStatement(tok)
+            if tok.next.type == "ELSE":
+                tok.selectNext()
+                if tok.next.type != "NL":
+                    sys.stderr.write("Erro de sintaxe. Nova linha esperada após ELSE. (9)")
+                    sys.exit(1)
+                tok.selectNext()
+                bloco2 = Parser.parseStatement(tok)
+                if tok.next.type != "END":
+                    sys.stderr.write("Erro de sintaxe. 'end' esperado. (8)")
+                    sys.exit(1)
+                tok.selectNext()
+                if tok.next.type != "NL":
+                    sys.stderr.write("Erro de sintaxe. Nova linha esperada após END. (9)")
+                    sys.exit(1)
+                tok.selectNext()
+                return If(value="if", children=[condicao, bloco1, bloco2])
+            elif tok.next.type == "END":
+                tok.selectNext()
+                return If(value="if", children=[condicao, bloco1])
+            else:
+                sys.stderr.write("Erro de sintaxe. 'end' esperado. (9)")
+                sys.exit(1)
+        elif tok.next.type == "WHILE":
+            tok.selectNext()
+            condicao = Parser.parseBoolExp(tok)
+            if tok.next.type != "DO":
+                sys.stderr.write("Erro de sintaxe. 'do' esperado. (10)")
+                sys.exit(1)
+            tok.selectNext()
+            if tok.next.type != "NL":
+                sys.stderr.write("Erro de sintaxe. Nova linha esperada após DO. (11)")
+                sys.exit(1)
+            tok.selectNext()
+            lista_statements = []
+            while (tok.next.type != "END"):
+                lista_statements.append(Parser.parseStatement(tok))
+            tok.selectNext()
+            if tok.next.type != "NL":
+                sys.stderr.write("Erro de sintaxe. Nova linha esperada após END. (12)")
+                sys.exit(1)
+            tok.selectNext()
+            return While(value="while", children=[condicao, lista_statements])
         else:
             sys.stderr.write("Erro de sintaxe. '=' esperado. (3)")
             sys.exit(1)
+
+    def parseBoolExp(tok):
+        resultado = Parser.parseBoolTerm(tok)
+
+        while (1):
+            if tok.next.type == "OR":
+                tok.selectNext()
+                resultado = BinOp("or", [resultado, Parser.parseBoolTerm(tok)])
+            else:
+                return resultado
+            
+    def parseBoolTerm(tok):
+        resultado = Parser.parseRelExp(tok)
+
+        while (1):
+            if tok.next.type == "AND":
+                tok.selectNext()
+                resultado = BinOp("and", [resultado, Parser.parseRelExp(tok)])
+            else:
+                return resultado
+            
+    def parseRelExp(tok):
+        resultado = Parser.parseExpression(tok)
+        if tok.next.type == "GT":
+            tok.selectNext()
+            return BinOp(">", [resultado, Parser.parseExpression(tok)])
+        elif tok.next.type == "LT":
+            tok.selectNext()
+            return BinOp("<", [resultado, Parser.parseExpression(tok)])
+        elif tok.next.type == "EQ":
+            tok.selectNext()
+            return BinOp("==", [resultado, Parser.parseExpression(tok)])
+        else:
+            return resultado
 
     def parseBlock(tok):
         saida = Block([])
