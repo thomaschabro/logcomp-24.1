@@ -132,7 +132,6 @@ class BinOp(Node):
         super().__init__(value, children)
 
     def Evaluate(self, st):
-        print(self.value, self.children[0].Evaluate(st), self.children[1].Evaluate(st))
         if self.value == "..":
             return ["STR", str(self.children[0].Evaluate(st)[1]) + str(self.children[1].Evaluate(st)[1])]
         if self.children[0].Evaluate(st)[0] == "INT" and self.children[1].Evaluate(st)[0] == "INT":    
@@ -247,7 +246,6 @@ class Print(Node):
 
     def Evaluate(self, st):
         var = self.children[0].Evaluate(st)
-        print(var)
         if var[0] == "STR":
             sys.stdout.write(str(var[1]) + "\n")
         elif var[0] == "INT":
