@@ -132,6 +132,7 @@ class BinOp(Node):
         super().__init__(value, children)
 
     def Evaluate(self, st):
+        print(self.value, self.children[0].Evaluate(st), self.children[1].Evaluate(st))
         if self.value == "..":
             return ["STR", str(self.children[0].Evaluate(st)[1]) + str(self.children[1].Evaluate(st)[1])]
         if self.children[0].Evaluate(st)[0] == "INT" and self.children[1].Evaluate(st)[0] == "INT":    
@@ -565,7 +566,11 @@ class SymbolTable:
         return self.table[key][0]
     
     def create(self, key):
-        self.table[key] = None
+        if key not in self.table:
+            self.table[key] = None
+        else:
+            sys.stderr.write("Variável sendo redefinida [ " + key + " ]")
+            sys.exit(1)
 
 def main():
     if len(sys.argv) != 2:
