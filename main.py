@@ -157,10 +157,16 @@ class BinOp(Node):
         elif self.value == "==" or self.value == ">" or self.value == "<":
             if self.children[0].Evaluate(st)[0] == self.children[1].Evaluate(st)[0]:
                 if self.value == "==":
+                    if self.children[0].Evaluate(st)[0] == "STR":
+                        return [self.children[0].Evaluate(st)[0], int(self.children[0].Evaluate(st)[1] == self.children[1].Evaluate(st)[1])]
                     return [self.children[0].Evaluate(st)[0], int(int(self.children[0].Evaluate(st)[1]) == int(self.children[1].Evaluate(st)[1]))]
                 elif self.value == ">":
+                    if self.children[0].Evaluate(st)[0] == "STR":
+                        return [self.children[0].Evaluate(st)[0], int(self.children[0].Evaluate(st)[1] > self.children[1].Evaluate(st)[1])]
                     return [self.children[0].Evaluate(st)[0], int(int(self.children[0].Evaluate(st)[1]) > int(self.children[1].Evaluate(st)[1]))]
                 elif self.value == "<":
+                    if self.children[0].Evaluate(st)[0] == "STR":
+                        return [self.children[0].Evaluate(st)[0], int(self.children[0].Evaluate(st)[1] < self.children[1].Evaluate(st)[1])]
                     return [self.children[0].Evaluate(st)[0], int(int(self.children[0].Evaluate(st)[1]) < int(self.children[1].Evaluate(st)[1]))]
             else:
                 sys.stderr.write("Tipo dos operadores inválido.")
