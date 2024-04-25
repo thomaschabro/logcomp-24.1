@@ -132,35 +132,45 @@ class BinOp(Node):
         super().__init__(value, children)
 
     def Evaluate(self, st):
-        print(self.value, self.children[0].Evaluate(st), self.children[1].Evaluate(st))
         if self.value == "..":
             return ["STR", str(self.children[0].Evaluate(st)[1]) + str(self.children[1].Evaluate(st)[1])]
-        if self.children[0].Evaluate(st)[0] == "INT" and self.children[1].Evaluate(st)[0] == "INT":    
-            if self.value == "+":
-                return ["INT", int(self.children[0].Evaluate(st)[1]) + int(self.children[1].Evaluate(st)[1])]
-            elif self.value == "-":
-                return ["INT", int(self.children[0].Evaluate(st)[1]) - int(self.children[1].Evaluate(st)[1])]
-            elif self.value == "*":
-                return ["INT", int(self.children[0].Evaluate(st)[1]) * int(self.children[1].Evaluate(st)[1])]
-            elif self.value == "/":
-                return ["INT", int(self.children[0].Evaluate(st)[1]) // int(self.children[1].Evaluate(st)[1])]
-            elif self.value == "and":
-                return ["INT", int(self.children[0].Evaluate(st)[1]) and int(self.children[1].Evaluate(st)[1])]
-            elif self.value == "or":
-                return ["INT", int(self.children[0].Evaluate(st)[1]) or int(self.children[1].Evaluate(st)[1])]
-            elif self.value == "==":
-                return ["INT", int(int(self.children[0].Evaluate(st)[1]) == int(self.children[1].Evaluate(st)[1]))]
-        elif self.children[0].Evaluate(st)[0] == self.children[1].Evaluate(st)[0]:
-            if self.value == "==":
-                return [self.children[0].Evaluate(st)[0], int(int(self.children[0].Evaluate(st)[1]) == int(self.children[1].Evaluate(st)[1]))]
-            elif self.value == ">":
-                return [self.children[0].Evaluate(st)[0], int(int(self.children[0].Evaluate(st)[1]) > int(self.children[1].Evaluate(st)[1]))]
-            elif self.value == "<":
-                return [self.children[0].Evaluate(st)[0], int(int(self.children[0].Evaluate(st)[1]) < int(self.children[1].Evaluate(st)[1]))]
+        elif self.value == "+" or self.value == "-" or self.value == "*" or self.value == "/" or self.value == "and" or self.value == "or":
+            if self.children[0].Evaluate(st)[0] == "INT" and self.children[1].Evaluate(st)[0] == "INT":    
+                if self.value == "+":
+                    return ["INT", int(self.children[0].Evaluate(st)[1]) + int(self.children[1].Evaluate(st)[1])]
+                elif self.value == "-":
+                    return ["INT", int(self.children[0].Evaluate(st)[1]) - int(self.children[1].Evaluate(st)[1])]
+                elif self.value == "*":
+                    return ["INT", int(self.children[0].Evaluate(st)[1]) * int(self.children[1].Evaluate(st)[1])]
+                elif self.value == "/":
+                    return ["INT", int(self.children[0].Evaluate(st)[1]) // int(self.children[1].Evaluate(st)[1])]
+                elif self.value == "and":
+                    return ["INT", int(self.children[0].Evaluate(st)[1]) and int(self.children[1].Evaluate(st)[1])]
+                elif self.value == "or":
+                    return ["INT", int(self.children[0].Evaluate(st)[1]) or int(self.children[1].Evaluate(st)[1])]
+                elif self.value == "==":
+                    return ["INT", int(int(self.children[0].Evaluate(st)[1]) == int(self.children[1].Evaluate(st)[1]))]
+            else:
+                sys.stderr.write("Tipo dos operadores inválido.")
+                sys.exit(1)
+                return
+        elif self.value == "==" or self.value == ">" or self.value == "<":
+            if self.children[0].Evaluate(st)[0] == self.children[1].Evaluate(st)[0]:
+                if self.value == "==":
+                    return [self.children[0].Evaluate(st)[0], int(int(self.children[0].Evaluate(st)[1]) == int(self.children[1].Evaluate(st)[1]))]
+                elif self.value == ">":
+                    return [self.children[0].Evaluate(st)[0], int(int(self.children[0].Evaluate(st)[1]) > int(self.children[1].Evaluate(st)[1]))]
+                elif self.value == "<":
+                    return [self.children[0].Evaluate(st)[0], int(int(self.children[0].Evaluate(st)[1]) < int(self.children[1].Evaluate(st)[1]))]
+            else:
+                sys.stderr.write("Tipo dos operadores inválido.")
+                sys.exit(1)
+                return
         else:
-            sys.stderr.write("Tipo dos operadores inválido.")
+            sys.stderr.write("Tipo da operação inválido.")
             sys.exit(1)
             return
+        
 
 class UnOp(Node):
     def __init__(self, value, children):
@@ -267,7 +277,7 @@ class While(Node):
         super()._init_(None, children)
 
     def Evaluate(self, st):
-        while self.children[0].Evaluate(st):
+        while self.children[0].Evaluate(st)[1] == 1:
             for child in self.children[1]:
                 child.Evaluate(st)
 
@@ -471,7 +481,8 @@ class Parser:
                 sys.stderr.write("Erro de sintaxe. Nova linha esperada após END. (12)")
                 sys.exit(1)
             tok.selectNext()
-            return While(value="while", children=[condicao, lista_statements])
+            whi =  While(value="while", children=[condicao, lista_statements])
+            return whi
         elif tok.next.type == "LOCAL":
             tok.selectNext()
             if tok.next.type != "IDEN":
