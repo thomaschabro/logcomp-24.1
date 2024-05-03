@@ -574,8 +574,8 @@ class Parser:
         return saida
 
     def run(code):
-        codigo_entrada = code
         code_filtrado = PrePro.filter(code=code)
+        codigo_entrada = code_filtrado
         tokenizer = Tokenizer(code_filtrado, 0, None)
         tokenizer.selectNext()
         ast = Parser.parseBlock(tokenizer)
