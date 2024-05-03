@@ -1,7 +1,6 @@
 local x
 x = 1
-if x > 1 then
-  	x = 2
-else
-	x = 3
+while x < 5 do
+  	x = x + 1
+	print(x)
 end
