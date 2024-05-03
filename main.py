@@ -145,9 +145,9 @@ class BinOp(Node):
         elif self.value == "-":
             saida_asm.append("SUB EAX, EBX")
         elif self.value == "*":
-            saida_asm.append("IMUL EAX")
+            saida_asm.append("IMUL EBX")
         elif self.value == "/":
-            saida_asm.append("IDIV EAX")
+            saida_asm.append("IDIV EBX")
         elif self.value == "and":
             saida_asm.append("AND EAX, EBX")
         elif self.value == "or":
@@ -520,6 +520,9 @@ class Parser:
             elif tok.next.type == "NL":
                 tok.selectNext()
                 return VarDec(value="assign", children=[Identifier(iden), None])
+            else:
+                sys.stderr.write("Erro de sintaxe. Erro após LOCAL. (14)")
+                sys.exit(1)
         else:
             sys.stderr.write("Erro de sintaxe. '=' esperado. (3)")
             sys.exit(1)
