@@ -520,9 +520,6 @@ class Parser:
             elif tok.next.type == "NL":
                 tok.selectNext()
                 return VarDec(value="assign", children=[Identifier(iden), None])
-            else:
-                sys.stderr.write("Erro de sintaxe. Erro após LOCAL. (14)")
-                sys.exit(1)
         else:
             sys.stderr.write("Erro de sintaxe. '=' esperado. (3)")
             sys.exit(1)
