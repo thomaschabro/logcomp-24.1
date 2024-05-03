@@ -145,9 +145,9 @@ class BinOp(Node):
         elif self.value == "-":
             saida_asm.append("SUB EAX, EBX")
         elif self.value == "*":
-            saida_asm.append("IMUL EAX, EBX")
+            saida_asm.append("IMUL EAX")
         elif self.value == "/":
-            saida_asm.append("IDIV EAX, EBX")
+            saida_asm.append("IDIV EAX")
         elif self.value == "and":
             saida_asm.append("AND EAX, EBX")
         elif self.value == "or":
