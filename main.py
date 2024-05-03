@@ -210,8 +210,12 @@ class Block(Node):
         super()._init_(None, children)
 
     def Evaluate(self, st):
+        resultado = ""
         for child in self.children:
-            child.Evaluate(st)
+            if child != None:
+                resultado += child.Evaluate(st)
+        
+        return resultado
 
 class Identifier(Node):
     def _init_(self, value):
