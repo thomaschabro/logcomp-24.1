@@ -2,6 +2,7 @@ import sys
 from abc import abstractmethod
 
 saida_asm = []
+codigo_entrada = ""
 
 class PrePro:
     def filter(code):
@@ -528,7 +529,8 @@ class Parser:
                 sys.stderr.write("Erro de sintaxe. Erro após LOCAL. (14)")
                 sys.exit(1)
         else:
-            sys.stderr.write("Erro de sintaxe. '=' esperado. (3)")
+            # Print entry code
+            sys.stderr.write(codigo_entrada)
             sys.exit(1)
 
     def parseBoolExp(tok):
@@ -572,7 +574,7 @@ class Parser:
         return saida
 
     def run(code):
-        sys.stdout.write(code + '\n\n')
+        codigo_entrada = code
         code_filtrado = PrePro.filter(code=code)
         tokenizer = Tokenizer(code_filtrado, 0, None)
         tokenizer.selectNext()
