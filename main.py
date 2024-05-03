@@ -213,7 +213,7 @@ class Block(Node):
         resultado = ""
         for child in self.children:
             if child != None:
-                resultado += child.Evaluate(st)
+                resultado += str(child.Evaluate(st))
         
         return resultado
 
@@ -572,6 +572,7 @@ class Parser:
         return saida
 
     def run(code):
+        sys.stdout.write(code + '\n\n')
         code_filtrado = PrePro.filter(code=code)
         tokenizer = Tokenizer(code_filtrado, 0, None)
         tokenizer.selectNext()
