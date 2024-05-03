@@ -1,9 +1,11 @@
-local x
-x = 1
-while x < 5 do
-  print(x)
-  x = x + 1
-  if x == 3 then
-	print(1010)
-  end
+local i
+local n
+local f
+n = read()
+f = 1
+i = 2
+while i < n + 1 do
+f = f * i
+i = i + 1
 end
+print(f)

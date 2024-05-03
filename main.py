@@ -141,29 +141,26 @@ class BinOp(Node):
         saida_asm.append("POP EBX")
 
         if self.value == "+":
-            saida_asm.append("ADD EAX, EBX ;")
+            saida_asm.append("ADD EAX, EBX")
         elif self.value == "-":
-            saida_asm.append("SUB EAX, EBX ;")
+            saida_asm.append("SUB EAX, EBX")
         elif self.value == "*":
-            saida_asm.append("IMUL EAX, EBX ;")
+            saida_asm.append("IMUL EAX, EBX")
         elif self.value == "/":
-            saida_asm.append("IDIV EAX, EBX ;")
+            saida_asm.append("IDIV EAX, EBX")
         elif self.value == "and":
-            saida_asm.append("AND EAX, EBX ;")
+            saida_asm.append("AND EAX, EBX")
         elif self.value == "or":
-            saida_asm.append("OR EAX, EBX ;")
+            saida_asm.append("OR EAX, EBX")
         elif self.value == "<":
-            saida_asm.append("CMP EAX, EBX ;")
-            saida_asm.append("SETL AL ;")
-            saida_asm.append("MOVZX EAX, AL ;")
+            saida_asm.append("CMP EAX, EBX")
+            saida_asm.append("CALL binop_jl")
         elif self.value == ">":
-            saida_asm.append("CMP EAX, EBX ;")
-            saida_asm.append("SETG AL ;")
-            saida_asm.append("MOVZX EAX, AL ;")
+            saida_asm.append("CMP EAX, EBX")
+            saida_asm.append("CALL binop_jg")
         elif self.value == "==":
-            saida_asm.append("CMP EAX, EBX ;")
-            saida_asm.append("SETE AL ;")
-            saida_asm.append("MOVZX EAX, AL ;")
+            saida_asm.append("CMP EAX, EBX")
+            saida_asm.append("CALL binop_je")
         else:
             sys.stderr.write("Tipo da operação inválido. -> BINOP")
             sys.exit(1)

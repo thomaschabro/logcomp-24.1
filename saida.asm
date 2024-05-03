@@ -47,10 +47,24 @@ MOV EBP, ESP ; estabelece um novo base pointer
 ; codigo gerado pelo compilador abaixo
 
 PUSH DWORD 0 ;
+PUSH DWORD 0 ;
+PUSH DWORD 0 ;
+PUSH scanint
+PUSH formatin
+call scanf
+ADD ESP, 8
+MOV EAX, DWORD [scanint]
+MOV [EBP-8], EAX ;
 MOV EAX, 1
+MOV [EBP-12], EAX ;
+MOV EAX, 2
 MOV [EBP-4], EAX ;
 LOOP_1:
-MOV EAX, 5
+MOV EAX, 1
+PUSH EAX
+MOV EAX, [EBP-8] ;
+POP EBX
+ADD EAX, EBX ;
 PUSH EAX
 MOV EAX, [EBP-4] ;
 POP EBX
@@ -61,35 +75,23 @@ CMP EAX, False
 JE END_1
 MOV EAX, [EBP-4] ;
 PUSH EAX
-PUSH formatout
-CALL printf
-ADD ESP, 8
+MOV EAX, [EBP-12] ;
+POP EBX
+IMUL EAX, EBX ;
+MOV [EBP-12], EAX ;
 MOV EAX, 1
 PUSH EAX
 MOV EAX, [EBP-4] ;
 POP EBX
 ADD EAX, EBX ;
 MOV [EBP-4], EAX ;
-IF_1:
-MOV EAX, 3
-PUSH EAX
-MOV EAX, [EBP-4] ;
-POP EBX
-CMP EAX, EBX ;
-SETE AL ;
-MOVZX EAX, AL ;
-CMP EAX, False
-JE ELSE_1
-MOV EAX, 1010
+JMP LOOP_1
+END_1:
+MOV EAX, [EBP-12] ;
 PUSH EAX
 PUSH formatout
 CALL printf
 ADD ESP, 8
-JMP ENDIF_1
-ELSE_1:
-ENDIF_1:
-JMP LOOP_1
-END_1:
 
 ; interrupcao de saida (default)
 
