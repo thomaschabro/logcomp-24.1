@@ -644,7 +644,8 @@ def main():
         Parser.run(file)
 
         # remove the ".lua" from file variable
-        file = file[:-4]
+        nome_inteiro = sys.argv[1]
+        file = nome_inteiro[:-4]
         with open(str(file) + ".asm", "w") as f:
             f.write('; constantes\n')
             f.write('SYS_EXIT equ 1\n')
