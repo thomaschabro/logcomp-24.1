@@ -1,6 +1,8 @@
 import sys
 from abc import abstractmethod
 
+saida_asm = []
+
 class PrePro:
     def filter(code):
         filtered_lines = []
@@ -122,6 +124,7 @@ class Node():
     def __init__ (self, value:int, children=None):
         self.value = value
         self.children = children if children is not None else []
+        self.index = 0
 
     @abstractmethod
     def Evaluate(self):
@@ -132,48 +135,37 @@ class BinOp(Node):
         super().__init__(value, children)
 
     def Evaluate(self, st):
-        if self.value == "..":
-            return ["STR", str(self.children[0].Evaluate(st)[1]) + str(self.children[1].Evaluate(st)[1])]
-        elif self.value == "+" or self.value == "-" or self.value == "*" or self.value == "/" or self.value == "and" or self.value == "or":
-            if self.children[0].Evaluate(st)[0] == "INT" and self.children[1].Evaluate(st)[0] == "INT":    
-                if self.value == "+":
-                    return ["INT", int(self.children[0].Evaluate(st)[1]) + int(self.children[1].Evaluate(st)[1])]
-                elif self.value == "-":
-                    return ["INT", int(self.children[0].Evaluate(st)[1]) - int(self.children[1].Evaluate(st)[1])]
-                elif self.value == "*":
-                    return ["INT", int(self.children[0].Evaluate(st)[1]) * int(self.children[1].Evaluate(st)[1])]
-                elif self.value == "/":
-                    return ["INT", int(self.children[0].Evaluate(st)[1]) // int(self.children[1].Evaluate(st)[1])]
-                elif self.value == "and":
-                    return ["INT", int(self.children[0].Evaluate(st)[1]) and int(self.children[1].Evaluate(st)[1])]
-                elif self.value == "or":
-                    return ["INT", int(self.children[0].Evaluate(st)[1]) or int(self.children[1].Evaluate(st)[1])]
-                elif self.value == "==":
-                    return ["INT", int(int(self.children[0].Evaluate(st)[1]) == int(self.children[1].Evaluate(st)[1]))]
-            else:
-                sys.stderr.write("Tipo dos operadores inválido.")
-                sys.exit(1)
-                return
-        elif self.value == "==" or self.value == ">" or self.value == "<":
-            if self.children[0].Evaluate(st)[0] == self.children[1].Evaluate(st)[0]:
-                if self.value == "==":
-                    if self.children[0].Evaluate(st)[0] == "STR":
-                        return [self.children[0].Evaluate(st)[0], int(self.children[0].Evaluate(st)[1] == self.children[1].Evaluate(st)[1])]
-                    return [self.children[0].Evaluate(st)[0], int(int(self.children[0].Evaluate(st)[1]) == int(self.children[1].Evaluate(st)[1]))]
-                elif self.value == ">":
-                    if self.children[0].Evaluate(st)[0] == "STR":
-                        return [self.children[0].Evaluate(st)[0], int(self.children[0].Evaluate(st)[1] > self.children[1].Evaluate(st)[1])]
-                    return [self.children[0].Evaluate(st)[0], int(int(self.children[0].Evaluate(st)[1]) > int(self.children[1].Evaluate(st)[1]))]
-                elif self.value == "<":
-                    if self.children[0].Evaluate(st)[0] == "STR":
-                        return [self.children[0].Evaluate(st)[0], int(self.children[0].Evaluate(st)[1] < self.children[1].Evaluate(st)[1])]
-                    return [self.children[0].Evaluate(st)[0], int(int(self.children[0].Evaluate(st)[1]) < int(self.children[1].Evaluate(st)[1]))]
-            else:
-                sys.stderr.write("Tipo dos operadores inválido.")
-                sys.exit(1)
-                return
+        self.children[1].Evaluate(st)
+        saida_asm.append("PUSH EAX")
+        self.children[0].Evaluate(st)
+        saida_asm.append("POP EBX")
+
+        if self.value == "+":
+            saida_asm.append("ADD EAX, EBX ;")
+        elif self.value == "-":
+            saida_asm.append("SUB EAX, EBX ;")
+        elif self.value == "*":
+            saida_asm.append("IMUL EAX, EBX ;")
+        elif self.value == "/":
+            saida_asm.append("IDIV EAX, EBX ;")
+        elif self.value == "and":
+            saida_asm.append("AND EAX, EBX ;")
+        elif self.value == "or":
+            saida_asm.append("OR EAX, EBX ;")
+        elif self.value == "<":
+            saida_asm.append("CMP EAX, EBX ;")
+            saida_asm.append("SETL AL ;")
+            saida_asm.append("MOVZX EAX, AL ;")
+        elif self.value == ">":
+            saida_asm.append("CMP EAX, EBX ;")
+            saida_asm.append("SETG AL ;")
+            saida_asm.append("MOVZX EAX, AL ;")
+        elif self.value == "==":
+            saida_asm.append("CMP EAX, EBX ;")
+            saida_asm.append("SETE AL ;")
+            saida_asm.append("MOVZX EAX, AL ;")
         else:
-            sys.stderr.write("Tipo da operação inválido.")
+            sys.stderr.write("Tipo da operação inválido. -> BINOP")
             sys.exit(1)
             return
         
@@ -200,7 +192,7 @@ class IntVal(Node):
         super().__init__(value, [])
 
     def Evaluate(self, st):
-        return ["INT", int(self.value)]
+        saida_asm.append("MOV EAX, " + str(self.value))  
     
 class StrVal(Node):
     def __init__(self, value):
@@ -229,22 +221,16 @@ class Identifier(Node):
         super()._init_(value, [])
 
     def Evaluate(self, st):
-        try:
-            try:
-                true = st.get(self.value).isalpha()
-                return ["STR", st.get(self.value)]
-            except:
-                return ["INT", st.get(self.value)]
-        except:
-            sys.stderr.write("Variável sendo usada sem ser declarada [ " + self.value + " ]")
-            sys.exit(1)
+        saida_asm.append("MOV EAX, [EBP-" + str(st.get(self.value)) + "] ;")
 
 class Assign(Node):
     def _init_(self, children):
         super()._init_(None, children)
 
     def Evaluate(self, st):
-        st.set(self.children[0].value, self.children[1].Evaluate(st)[1], self.children[1].Evaluate(st)[0])
+        self.children[1].Evaluate(st)
+        value = st.get(self.children[0].value)
+        saida_asm.append("MOV [EBP-" + str(value) + "], EAX ;")
 
 class VarDec(Node):
     def _init_(self, children):
@@ -252,47 +238,77 @@ class VarDec(Node):
 
     def Evaluate(self, st):
         if self.children[1] is not None:
-            st.create(self.children[0].value)
-            st.set(self.children[0].value, self.children[1].Evaluate(st)[1], self.children[1].Evaluate(st)[0])
+            sys.stderr.write("Tipo dos operadores inválido.")
+            sys.exit(1)
+            return
         else:
             st.create(self.children[0].value)   
+            saida_asm.append("PUSH DWORD 0 ;")
 
 class Print(Node):
     def _init_(self, children):
         super()._init_(None, children)
 
     def Evaluate(self, st):
-        var = self.children[0].Evaluate(st)
-        if var[0] == "STR":
-            sys.stdout.write(str(var[1]) + "\n")
-        elif var[0] == "INT":
-            sys.stdout.write(str(var[1]) + "\n")
+        self.children[0].Evaluate(st)
+        saida_asm.append("PUSH EAX")
+        saida_asm.append("PUSH formatout")
+        saida_asm.append("CALL printf")
+        saida_asm.append("ADD ESP, 8")
 
 class If(Node):
     def _init_(self, children):
         super()._init_(None, children)
 
     def Evaluate(self, st):
-        if self.children[0].Evaluate(st):
-            self.children[1].Evaluate(st)
-        elif len(self.children) == 3:
+        # if self.children[0].Evaluate(st):
+        #     self.children[1].Evaluate(st)
+        # elif len(self.children) == 3:
+        #     self.children[2].Evaluate(st)
+        self.index += 1
+        saida_asm.append("IF_" + str(self.index) + ":")
+        self.children[0].Evaluate(st)
+        saida_asm.append("CMP EAX, False")
+        saida_asm.append("JE ELSE_" + str(self.index))
+        self.children[1].Evaluate(st)
+        saida_asm.append("JMP ENDIF_" + str(self.index))
+        saida_asm.append("ELSE_" + str(self.index) + ":")
+        if len(self.children) == 3:
             self.children[2].Evaluate(st)
+        saida_asm.append("ENDIF_" + str(self.index) + ":")
 
 class While(Node):
     def _init_(self, children):
         super()._init_(None, children)
 
     def Evaluate(self, st):
-        while self.children[0].Evaluate(st)[1] == 1:
-            for child in self.children[1]:
-                child.Evaluate(st)
+        # while self.children[0].Evaluate(st)[1] == 1:
+        #     for child in self.children[1]:
+        #         child.Evaluate(st)
+        self.index += 1
+        saida_asm.append("LOOP_" + str(self.index) + ":")
+        # Executa a condição
+        self.children[0].Evaluate(st)
+        saida_asm.append("CMP EAX, False")
+        saida_asm.append("JE END_" + str(self.index))
+        # Executa o bloco
+        for child in self.children[1]:
+            child.Evaluate(st)
+        saida_asm.append("JMP LOOP_" + str(self.index))
+        saida_asm.append("END_" + str(self.index) + ":")
+
+
 
 class Read(Node):
     def _init_(self, children):
         super()._init_(None, children)
 
     def Evaluate(self, st):
-        return ["INT", self.value]
+        saida_asm.append("PUSH scanint")
+        saida_asm.append("PUSH formatin")
+        saida_asm.append("call scanf")
+        saida_asm.append("ADD ESP, 8")
+        saida_asm.append("MOV EAX, DWORD [scanint]")
         
 class Parser:
     def __init__(self, tokenizer):
@@ -571,20 +587,22 @@ class Parser:
 class SymbolTable:
     def __init__(self):
         self.table = {}
+        self.size = 0
     
-    def set(self, key, value, type):
-        if key in self.table:
-            self.table[key] = [value, type]
-        else:
-            sys.stderr.write("Variável sendo definida sem ser declarada [ " + key + " ]")
-            sys.exit(1)
+    # def set(self, key, value, type):
+    #     if key in self.table:
+    #         self.table[key] = [value, type, self.table[key][2]]
+    #     else:
+    #         sys.stderr.write("Variável sendo definida sem ser declarada [ " + key + " ]")
+    #         sys.exit(1)
 
     def get(self, key):
-        return self.table[key][0]
+        return self.table[key]
     
     def create(self, key):
         if key not in self.table:
-            self.table[key] = None
+            self.size += 4
+            self.table[key] = self.size
         else:
             sys.stderr.write("Variável sendo redefinida [ " + key + " ]")
             sys.exit(1)
@@ -619,6 +637,73 @@ def main():
 
     else:
         Parser.run(file)
+
+        with open("saida.asm", "w") as f:
+            f.write('; constantes\n')
+            f.write('SYS_EXIT equ 1\n')
+            f.write('SYS_READ equ 3\n')
+            f.write('SYS_WRITE equ 4\n')
+            f.write('STDIN equ 0\n')
+            f.write('STDOUT equ 1\n')
+            f.write('True equ 1\n')
+            f.write('False equ 0\n')
+            f.write('segment .data\n')
+            f.write('formatin: db "%d", 0\n')
+            f.write('formatout: db "%d", 10, 0 ; newline, nul terminator\n')
+            f.write('scanint: times 4 db 0 ; 32-bits integer = 4 bytes\n')
+            f.write('segment .bss  ; variaveis\n')
+            f.write('res RESB 1\n')
+            f.write('section .text\n')
+            f.write('global main ; linux\n')
+            f.write(';global _main ; windows\n')
+            f.write('extern scanf ; linux\n')
+            f.write('extern printf ; linux\n')
+            f.write(';extern _scanf ; windows\n')
+            f.write(';extern _printf; windows\n')
+            f.write('extern fflush ; linux\n')
+            f.write(';extern _fflush ; windows\n')
+            f.write('extern stdout ; linux\n')
+            f.write(';extern _stdout ; windows\n')
+            f.write('; subrotinas if/while\n')
+            f.write('binop_je:\n')
+            f.write('JE binop_true\n')
+            f.write('JMP binop_false\n')
+            f.write('binop_jg:\n')
+            f.write('JG binop_true\n')
+            f.write('JMP binop_false\n')
+            f.write('binop_jl:\n')
+            f.write('JL binop_true\n')
+            f.write('JMP binop_false\n')
+            f.write('binop_false:\n')
+            f.write('MOV EAX, False  \n')
+            f.write('JMP binop_exit\n')
+            f.write('binop_true:\n')
+            f.write('MOV EAX, True\n')
+            f.write('binop_exit:\n')
+            f.write('RET\n')
+            f.write('main:\n')
+            f.write('PUSH EBP ; guarda o base pointer\n')
+            f.write('MOV EBP, ESP ; estabelece um novo base pointer\n\n')
+            f.write('; codigo gerado pelo compilador abaixo\n\n')
+
+            i = 0
+            while i < len(saida_asm):
+                if i == (len(saida_asm) - 1):
+                    f.write(saida_asm[i])
+                else:
+                    f.write(saida_asm[i] + "\n")
+                i+=1
+
+                
+            f.write('\n\n; interrupcao de saida (default)\n\n')
+            f.write('PUSH DWORD [stdout]\n')
+            f.write('CALL fflush\n')
+            f.write('ADD ESP, 4\n')
+            f.write('MOV ESP, EBP\n')
+            f.write('POP EBP\n')
+            f.write('MOV EAX, 1\n')
+            f.write('XOR EBX, EBX\n')
+            f.write('INT 0x80\n')
 
 if __name__ == "__main__":
     main()
