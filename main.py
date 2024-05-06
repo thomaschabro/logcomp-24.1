@@ -2,7 +2,6 @@ import sys
 from abc import abstractmethod
 
 saida_asm = []
-codigo_entrada = ""
 
 class PrePro:
     def filter(code):
@@ -529,8 +528,7 @@ class Parser:
                 sys.stderr.write("Erro de sintaxe. Erro após LOCAL. (14)")
                 sys.exit(1)
         else:
-            # Print entry code
-            sys.stderr.write(codigo_entrada)
+            sys.stderr.write(tok.source)
             sys.exit(1)
 
     def parseBoolExp(tok):
@@ -575,8 +573,6 @@ class Parser:
 
     def run(code):
         code_filtrado = PrePro.filter(code=code)
-        print(code_filtrado)
-        codigo_entrada = code_filtrado
         tokenizer = Tokenizer(code_filtrado, 0, None)
         tokenizer.selectNext()
         ast = Parser.parseBlock(tokenizer)
@@ -646,6 +642,7 @@ def main():
         # remove the ".lua" from file variable
         nome_inteiro = sys.argv[1]
         file = nome_inteiro[:-4]
+        print(file)
         with open(str(file) + ".asm", "w") as f:
             f.write('; constantes\n')
             f.write('SYS_EXIT equ 1\n')
