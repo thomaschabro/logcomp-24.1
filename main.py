@@ -3,6 +3,8 @@ from abc import abstractmethod
 
 saida_asm = []
 
+label_index = 0
+
 class PrePro:
     def filter(code):
         filtered_lines = []
@@ -40,6 +42,8 @@ class Tokenizer():
             "not",
             "read",
             "local"]
+        self.if_index = 0
+        self.while_index = 0
     
     def selectNext(self):
         if self.position >= len(self.source):
@@ -124,7 +128,6 @@ class Node():
     def __init__ (self, value:int, children=None):
         self.value = value
         self.children = children if children is not None else []
-        self.index = 0
 
     @abstractmethod
     def Evaluate(self):
@@ -262,42 +265,39 @@ class If(Node):
         super()._init_(None, children)
 
     def Evaluate(self, st):
-        # if self.children[0].Evaluate(st):
-        #     self.children[1].Evaluate(st)
-        # elif len(self.children) == 3:
-        #     self.children[2].Evaluate(st)
-        self.index += 1
-        saida_asm.append("IF_" + str(self.index) + ":")
+        global label_index 
+        label_index += 1
+
+        saida_asm.append("IF_" + str(label_index) + ":")
         self.children[0].Evaluate(st)
         saida_asm.append("CMP EAX, False")
-        saida_asm.append("JE ELSE_" + str(self.index))
+        saida_asm.append("JE ELSE_" + str(label_index))
         if self.children[1] is not None:
             self.children[1].Evaluate(st)
-        saida_asm.append("JMP ENDIF_" + str(self.index))
-        saida_asm.append("ELSE_" + str(self.index) + ":")
+        saida_asm.append("JMP ENDIF_" + str(label_index))
+        saida_asm.append("ELSE_" + str(label_index) + ":")
         if len(self.children) == 3:
             self.children[2].Evaluate(st)
-        saida_asm.append("ENDIF_" + str(self.index) + ":")
+        saida_asm.append("ENDIF_" + str(label_index) + ":")
 
 class While(Node):
     def _init_(self, children):
         super()._init_(None, children)
 
     def Evaluate(self, st):
-        # while self.children[0].Evaluate(st)[1] == 1:
-        #     for child in self.children[1]:
-        #         child.Evaluate(st)
-        self.index += 1
-        saida_asm.append("LOOP_" + str(self.index) + ":")
+        global label_index 
+        label_index += 1
+        
+        saida_asm.append("LOOP_" + str(label_index) + ":")
         # Executa a condição
         self.children[0].Evaluate(st)
         saida_asm.append("CMP EAX, False")
-        saida_asm.append("JE END_" + str(self.index))
+        saida_asm.append("JE END_" + str(label_index))
         # Executa o bloco
         for child in self.children[1]:
             child.Evaluate(st)
-        saida_asm.append("JMP LOOP_" + str(self.index))
-        saida_asm.append("END_" + str(self.index) + ":")
+        saida_asm.append("JMP LOOP_" + str(label_index))
+        saida_asm.append("END_" + str(label_index) + ":")
 
 
 
