@@ -1,11 +1,17 @@
-local i
-local n
-local f
-n = read()
-f = 1
-i = 2
-while i < n + 1 do
-f = f * i
-i = i + 1
+local x
+local y
+x = 3+1
+y = x
+if x > 1 then
+x = 5-1
 end
-print(f)
+if (x == 3) then
+else
+x = 3
+end
+x = 3
+while x < 5 do
+y = x - 1
+x = x + 1
+end
+print(x)

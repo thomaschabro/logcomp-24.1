@@ -271,7 +271,8 @@ class If(Node):
         self.children[0].Evaluate(st)
         saida_asm.append("CMP EAX, False")
         saida_asm.append("JE ELSE_" + str(self.index))
-        self.children[1].Evaluate(st)
+        if self.children[1] is not None:
+            self.children[1].Evaluate(st)
         saida_asm.append("JMP ENDIF_" + str(self.index))
         saida_asm.append("ELSE_" + str(self.index) + ":")
         if len(self.children) == 3:
@@ -458,7 +459,7 @@ class Parser:
                 sys.stderr.write("Erro de sintaxe. Nova linha esperada após THEN. (8)")
                 sys.exit(1)
             tok.selectNext()
-            bloco1 = Parser.parseStatement(tok)
+            bloco1 = None
             if tok.next.type == "ELSE":
                 tok.selectNext()
                 if tok.next.type != "NL":
@@ -475,16 +476,34 @@ class Parser:
                     sys.exit(1)
                 tok.selectNext()
                 return If(value="if", children=[condicao, bloco1, bloco2])
-            elif tok.next.type == "END":
-                tok.selectNext()
-                if tok.next.type != "NL":
-                    sys.stderr.write("Erro de sintaxe. Nova linha esperada após END. (10)")
-                    sys.exit(1)
-                tok.selectNext()
-                return If(value="if", children=[condicao, bloco1])
             else:
-                sys.stderr.write("Erro de sintaxe. 'end' esperado. (9)")
-                sys.exit(1)
+                bloco1 = Parser.parseStatement(tok)
+                if tok.next.type == "ELSE":
+                    tok.selectNext()
+                    if tok.next.type != "NL":
+                        sys.stderr.write("Erro de sintaxe. Nova linha esperada após ELSE. (9)")
+                        sys.exit(1)
+                    tok.selectNext()
+                    bloco2 = Parser.parseStatement(tok)
+                    if tok.next.type != "END":
+                        sys.stderr.write("Erro de sintaxe. 'end' esperado. (8)")
+                        sys.exit(1)
+                    tok.selectNext()
+                    if tok.next.type != "NL":
+                        sys.stderr.write("Erro de sintaxe. Nova linha esperada após END. (9)")
+                        sys.exit(1)
+                    tok.selectNext()
+                    return If(value="if", children=[condicao, bloco1, bloco2])
+                elif tok.next.type == "END":
+                    tok.selectNext()
+                    if tok.next.type != "NL":
+                        sys.stderr.write("Erro de sintaxe. Nova linha esperada após END. (10)")
+                        sys.exit(1)
+                    tok.selectNext()
+                    return If(value="if", children=[condicao, bloco1])
+                else:
+                    sys.stderr.write("Erro de sintaxe. 'end' esperado. (9)")
+                    sys.exit(1)
         elif tok.next.type == "WHILE":
             tok.selectNext()
             condicao = Parser.parseBoolExp(tok)
@@ -528,7 +547,7 @@ class Parser:
                 sys.stderr.write("Erro de sintaxe. Erro após LOCAL. (14)")
                 sys.exit(1)
         else:
-            sys.stderr.write(tok.source)
+            sys.stderr.write("Erro de sintaxe. Comando inválido. (15)")
             sys.exit(1)
 
     def parseBoolExp(tok):
@@ -639,10 +658,8 @@ def main():
     else:
         Parser.run(file)
 
-        # remove the ".lua" from file variable
         nome_inteiro = sys.argv[1]
         file = nome_inteiro[:-4]
-        print(file)
         with open(str(file) + ".asm", "w") as f:
             f.write('; constantes\n')
             f.write('SYS_EXIT equ 1\n')
