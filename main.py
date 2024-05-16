@@ -37,7 +37,9 @@ class Tokenizer():
             "or",
             "not",
             "read",
-            "local"]
+            "local",
+            "function",
+            "return"]
     
     def selectNext(self):
         if self.position >= len(self.source):
