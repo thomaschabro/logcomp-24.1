@@ -18,12 +18,12 @@ class PrePro:
         for line in filtered_lines:
             output += line + "\n"
         return output
-    
+
 class Token():
     def __init__(self, type, value):
         self.type = type
         self.value = value
-    
+
 class Tokenizer():
     def __init__(self, source, position, next):
         self.source = source
@@ -44,7 +44,7 @@ class Tokenizer():
             "local"]
         self.if_index = 0
         self.while_index = 0
-    
+
     def selectNext(self):
         if self.position >= len(self.source):
             self.next = None
@@ -122,7 +122,7 @@ class Tokenizer():
                 sys.stderr.write("Erro de sintaxe. Caractere inválido. (1)")
                 sys.exit(1)
                 return
-            
+
 
 class Node():
     def __init__ (self, value:int, children=None):
@@ -168,7 +168,7 @@ class BinOp(Node):
             sys.stderr.write("Tipo da operação inválido. -> BINOP")
             sys.exit(1)
             return
-        
+
 
 class UnOp(Node):
     def __init__(self, value, children):
@@ -186,21 +186,21 @@ class UnOp(Node):
             sys.stderr.write("Tipo dos operadores inválido para UnOp")
             sys.exit(1)
             return
-        
+
 class IntVal(Node):
     def __init__(self, value):
         super().__init__(value, [])
 
     def Evaluate(self, st):
-        saida_asm.append("MOV EAX, " + str(self.value))  
-    
+        saida_asm.append("MOV EAX, " + str(self.value))
+
 class StrVal(Node):
     def __init__(self, value):
         super().__init__(value, [])
 
     def Evaluate(self, st):
         return ["STR", self.value]
-    
+
 class NoOp(Node):
     def __init__(self):
         super().__init__(None, [])
@@ -217,7 +217,7 @@ class Block(Node):
         for child in self.children:
             if child != None:
                 resultado += str(child.Evaluate(st))
-        
+
         return resultado
 
 class Identifier(Node):
@@ -246,8 +246,15 @@ class VarDec(Node):
             sys.exit(1)
             return
         else:
-            st.create(self.children[0].value)   
+            st.create(self.children[0].value)
             saida_asm.append("PUSH DWORD 0 ;")
+
+class FuncDec(Node):
+    def _init_(self, children):
+        super()._init_(None, children)
+
+    def Evaluate(self, st):
+        pass
 
 class Print(Node):
     def _init_(self, children):
@@ -265,7 +272,7 @@ class If(Node):
         super()._init_(None, children)
 
     def Evaluate(self, st):
-        global label_index 
+        global label_index
         label_index += 1
 
         saida_asm.append("IF_" + str(label_index) + ":")
@@ -285,9 +292,9 @@ class While(Node):
         super()._init_(None, children)
 
     def Evaluate(self, st):
-        global label_index 
+        global label_index
         label_index += 1
-        
+
         saida_asm.append("LOOP_" + str(label_index) + ":")
         # Executa a condição
         self.children[0].Evaluate(st)
@@ -299,8 +306,6 @@ class While(Node):
         saida_asm.append("JMP LOOP_" + str(label_index))
         saida_asm.append("END_" + str(label_index) + ":")
 
-
-
 class Read(Node):
     def _init_(self, children):
         super()._init_(None, children)
@@ -311,7 +316,7 @@ class Read(Node):
         saida_asm.append("call scanf")
         saida_asm.append("ADD ESP, 8")
         saida_asm.append("MOV EAX, DWORD [scanint]")
-        
+
 class Parser:
     def __init__(self, tokenizer):
         self.tokenizer = tokenizer
@@ -559,7 +564,7 @@ class Parser:
                 resultado = BinOp("or", [resultado, Parser.parseBoolTerm(tok)])
             else:
                 return resultado
-            
+
     def parseBoolTerm(tok):
         resultado = Parser.parseRelExp(tok)
 
@@ -569,7 +574,7 @@ class Parser:
                 resultado = BinOp("and", [resultado, Parser.parseRelExp(tok)])
             else:
                 return resultado
-            
+
     def parseRelExp(tok):
         resultado = Parser.parseExpression(tok)
         if tok.next.type == "GT":
@@ -608,7 +613,7 @@ class SymbolTable:
     def __init__(self):
         self.table = {}
         self.size = 0
-    
+
     # def set(self, key, value, type):
     #     if key in self.table:
     #         self.table[key] = [value, type, self.table[key][2]]
@@ -618,7 +623,7 @@ class SymbolTable:
 
     def get(self, key):
         return self.table[key]
-    
+
     def create(self, key):
         if key not in self.table:
             self.size += 4
@@ -632,7 +637,7 @@ def main():
         print("Uso: python main.py <file>")
         print("  |-> EXEMPLO: python main.py teste.lua")
         return
-    
+
     file = sys.argv[1]
     if file[-4:] != ".lua":
         print("Erro: Arquivo inválido. Deve ser do tipo .lua")
@@ -641,14 +646,14 @@ def main():
         return
     with open(file, "r") as f:
         file = f.read()
-    
+
     left, right = 0, 0
     for char in file:
         if char == '(':
             left += 1
         if char == ')':
             right += 1
-    
+
     if left != right:
         print("Erro: Número de parênteses inválido.")
         sys.stderr.write("Erro de sintaxe. Número de parênteses inválido.")
@@ -716,7 +721,7 @@ def main():
                     f.write(saida_asm[i] + "\n")
                 i+=1
 
-                
+
             f.write('\n\n; interrupcao de saida (default)\n\n')
             f.write('PUSH DWORD [stdout]\n')
             f.write('CALL fflush\n')
