@@ -250,7 +250,6 @@ class Assign(Node):
         super()._init_(None, children)
 
     def Evaluate(self, st, ft):
-        print(self.children)
         st.set(self.children[0].value, self.children[1].Evaluate(st, ft)[1], self.children[1].Evaluate(st, ft)[0])
 
 class VarDec(Node):
@@ -286,8 +285,10 @@ class FuncCall(Node):
                 func_st.create(funcao_original.children[1][i].value)
                 func_st.set(funcao_original.children[1][i].value, self.children[1][i].Evaluate(st, ft)[1], self.children[1][i].Evaluate(st, ft)[0])
 
-            for child in funcao_original.children[2]:
-                child.Evaluate(func_st, ft)
+            for child in range(0, len(funcao_original.children[2])):
+                funcao_original.children[2][child].Evaluate(func_st, ft)
+
+            return funcao_original.children[2][-1].Evaluate(func_st, ft)
 
         else:
             sys.stderr.write("Função sendo chamada sem ser declarada [ " + self.children[0] + " ]")
