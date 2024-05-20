@@ -1,13 +1,14 @@
 function soma(x, y)
-	local a
-	a = x + y
-	print(a)
-	return a
+    return x + y
 end
 
-local a
-local b
-a = 3
-b = soma(a, 4)
-print(a)
-print(b)
+function read_val()
+    return read()
+end
+
+local x_1
+x_1 = soma(read_val()-1, 1)
+soma(2, 1)
+
+print(x_1)
+

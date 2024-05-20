@@ -467,6 +467,22 @@ class Parser:
                 else:
                     tok.selectNext()
                     return Assign(value="assign",children=[Identifier(iden), saida])
+            elif tok.next.type == "LPAREN":
+                tok.selectNext()
+                lista_parametros = []
+                while (tok.next.type != "RPAREN"):
+                    lista_parametros.append(Parser.parseBoolExp(tok))
+                    if tok.next.type != "COMMA" and tok.next.type != "RPAREN":
+                        sys.stderr.write("Erro de sintaxe. ',' esperado. (20)")
+                        sys.exit(1)
+                    if tok.next.type == "COMMA":
+                        tok.selectNext()
+                tok.selectNext()
+                if tok.next.type != "NL":
+                    sys.stderr.write("Erro de sintaxe. Nova linha esperada após RPAREN. (21)")
+                    sys.exit(1)
+                tok.selectNext()
+                return FuncCall(value="function", children=[iden, lista_parametros])
             else:
                 sys.stderr.write("Erro de sintaxe. '=' esperado. (31)")
                 sys.exit(1)
