@@ -361,7 +361,7 @@ class Parser:
                     resultado = BinOp("-", [resultado, Parser.parseTerm(tok)])
             elif tok.next is not None and tok.next.type == "CONCAT":
                 tok.selectNext()
-                if tok.next.type != "NUMBER" and tok.next.type != "LPAREN" and tok.next.type != "PLUS" and tok.next.type != "MINUS" and tok.next.type != "IDEN":
+                if tok.next.type != "NUMBER" and tok.next.type != "LPAREN" and tok.next.type != "PLUS" and tok.next.type != "MINUS" and tok.next.type != "IDEN" and tok.next.type != "STR":
                     sys.stderr.write("Erro de sintaxe. Número ou '(' esperado. (6 2 )")
                     sys.exit(1)
                 else:
