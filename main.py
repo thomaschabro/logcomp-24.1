@@ -278,6 +278,10 @@ class FuncCall(Node):
     def Evaluate(self, st, ft):
         func = ft.get(self.children[0])
         if func[1] == "FUNCTION":
+            if (len(func[0].children[1]) != len(self.children[1])):
+                sys.stderr.write("Número de parâmetros inválido para função [ " + self.children[0] + " ]")
+                sys.exit(1)
+
             funcao_original = func[0]
             # Vai executar de fato a função
             func_st = SymbolTable() # Cria uma nova st para a função
